@@ -1,0 +1,3 @@
+-Debug through edu.usu.cosl.syndication.io.impl.OAI20Parser.parseRecord to make sure it is not duplicating effort  
+-Add support for tag_filter when harvesting flickr and delicious feeds
+-Add support for updating entries when updated versions are published
