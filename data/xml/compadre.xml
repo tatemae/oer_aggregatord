@@ -1,0 +1,391 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
+    <responseDate>2008-01-31T18:52:38Z</responseDate>
+    <request metadataPrefix="nsdl_dc" set="439869" verb="ListRecords">http://services.nsdl.org:8080/nsdloai/OAI</request>
+    <ListRecords>
+        <record>
+            <header>
+                <identifier>oai:nsdl.org:439869:oai:compadre.org:10</identifier>
+                <datestamp>2007-12-03T20:00:56Z</datestamp>
+                <setSpec>439869</setSpec>
+            </header>
+            <metadata>
+                <nsdl_dc:nsdl_dc xmlns:nsdl_dc="http://ns.nsdl.org/nsdl_dc_v1.02/" schemaVersion="1.02.000" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dct="http://purl.org/dc/terms/" xmlns:ieee="http://www.ieee.org/xsd/LOMv1p0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ns.nsdl.org/nsdl_dc_v1.02/ http://ns.nsdl.org/schemas/nsdl_dc/nsdl_dc_v1.02.xsd">
+                    <dc:title>Interactive Physics II Player Workbook</dc:title>
+                    <dc:creator>Cindy Schwarz</dc:creator>
+                    <dc:subject>motion simulations</dc:subject>
+                    <dc:subject>Classical Mechanics</dc:subject>
+                    <dc:subject xsi:type="nsdl_dc:GEM">Science</dc:subject>
+                    <dc:subject xsi:type="nsdl_dc:GEM">Physics</dc:subject>
+                    <dc:description>This interactive workbook/disk package is designed to help students &quot;see&quot; and work with specific physics problems through simulations created with Interactive Physics. Students and schools do not have to purchase Interactive Physics, simulations are packaged with a run-time version of Interactive Physics. Both Macintosh and Windows versions are available.</dc:description>
+                    <dc:publisher>Prentice Hall</dc:publisher>
+                    <dct:created xsi:type="dct:W3CDTF">2003-10-10T19:16:06Z</dct:created>
+                    <dct:created xsi:type="dct:W3CDTF">2003-03-18T21:55:26Z</dct:created>
+                    <dct:dateSubmitted xsi:type="dct:W3CDTF">2003-10-10T19:16:06Z</dct:dateSubmitted>
+                    <dct:dateCopyrighted xsi:type="dct:W3CDTF">2004</dct:dateCopyrighted>
+                    <dct:dateAccepted xsi:type="dct:W3CDTF">2003-12-02T22:06:12Z</dct:dateAccepted>
+                    <dct:dateAccepted xsi:type="dct:W3CDTF">2003-10-10T19:16:07Z</dct:dateAccepted>
+                    <dct:modified xsi:type="dct:W3CDTF">2006-10-27T03:18:10Z</dct:modified>
+                    <dct:modified xsi:type="dct:W3CDTF">2005-04-14T19:54:47Z</dct:modified>
+                    <dct:modified xsi:type="dct:W3CDTF">2003-12-01T22:06:12Z</dct:modified>
+                    <dc:type>Tutorial</dc:type>
+                    <dc:type>Diagram</dc:type>
+                    <dc:type>Simulation</dc:type>
+                    <dc:type>Graph</dc:type>
+                    <dc:format>application/exe</dc:format>
+                    <dc:format>non-digital</dc:format>
+                    <dc:identifier xsi:type="dct:URI">http://vig.prenhall.com/catalog/academic/product/0,1144,0130671088,00.html</dc:identifier>
+                    <dc:identifier xsi:type="dct:ISBN">0132431068</dc:identifier>
+                    <dc:identifier>compadre.org:10</dc:identifier>
+                    <dc:language xsi:type="dct:RFC3066">en</dc:language>
+                    <dc:rights>Has a copyright or other restriction.</dc:rights>
+                    <dc:rights>&copy; Prentice Hall</dc:rights>
+                    <dct:audience>Teacher</dct:audience>
+                    <dct:audience>Learner</dct:audience>
+                    <dct:audience>Designer</dct:audience>
+                </nsdl_dc:nsdl_dc>
+            </metadata>
+            <about>
+                <nsdl_about xmlns="http://ns.nsdl.org/nsdl_about_v1.00" schemaVersion="1.00.000" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ns.nsdl.org/nsdl_about_v1.00 http://ns.nsdl.org/schemas/nsdl_about/nsdl_about_v1.00.xsd">
+                    <brand>
+                        <iconURL>http://crs.nsdl.org/brands/439869.jpg</iconURL>
+                        <title>comPADRE: Resources for physics and astronomy education</title>
+                        <width>100</width>
+                        <height>20</height>
+                    </brand>
+                    <category>item</category>
+                    <firstCreated>2004-04-13T20:30:29Z</firstCreated>
+                    <primaryIdentifier>http://vig.prenhall.com/catalog/academic/product/0,1144,0130671088,00.html</primaryIdentifier>
+                    <link linkType="primaryCollection">oai:nsdl.org:nsdl.nsdl:439869</link>
+                </nsdl_about>
+            </about>
+            <about>
+                <provenance xmlns="http://ns.nsdl.org/provenance_about_v1.00" schemaVersion="1.00.000" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ns.nsdl.org/provenance_about_v1.00 http://ns.nsdl.org/schemas/provenance_about/provenance_about_v1.00.xsd">
+                    <originDescription altered="true" harvestDate="2007-12-03T18:15:31Z">
+                        <harvestType>OAI2.0</harvestType>
+                        <dataSource public="true">http://www.compadre.org/OAI/2/OAI.cfm</dataSource>
+                        <identifier>oai:compadre.org:10</identifier>
+                        <datestamp>2007-02-05T06:14:02Z</datestamp>
+                        <metadataNamespace>http://ns.nsdl.org/nsdl_dc_v1.01</metadataNamespace>
+                    </originDescription>
+                </provenance>
+            </about>
+        </record>
+        <record>
+            <header>
+                <identifier>oai:nsdl.org:439869:oai:compadre.org:100</identifier>
+                <datestamp>2007-12-03T20:02:35Z</datestamp>
+                <setSpec>439869</setSpec>
+            </header>
+            <metadata>
+                <nsdl_dc:nsdl_dc xmlns:nsdl_dc="http://ns.nsdl.org/nsdl_dc_v1.02/" schemaVersion="1.02.000" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dct="http://purl.org/dc/terms/" xmlns:ieee="http://www.ieee.org/xsd/LOMv1p0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ns.nsdl.org/nsdl_dc_v1.02/ http://ns.nsdl.org/schemas/nsdl_dc/nsdl_dc_v1.02.xsd">
+                    <dc:title>Center for Earth and Planetary Studies</dc:title>
+                    <dc:creator>Center for Earth and Planetary Studies Smithsonian Institute</dc:creator>
+                    <dc:subject>Astronomy</dc:subject>
+                    <dc:subject>Other Sciences</dc:subject>
+                    <dc:subject>Geoscience</dc:subject>
+                    <dc:subject>Solar System</dc:subject>
+                    <dc:subject>Planetary Research</dc:subject>
+                    <dc:subject>Venus</dc:subject>
+                    <dc:subject>Moon</dc:subject>
+                    <dc:subject xsi:type="nsdl_dc:GEM">Earth science</dc:subject>
+                    <dc:subject xsi:type="nsdl_dc:GEM">Science</dc:subject>
+                    <dc:subject>Mars</dc:subject>
+                    <dc:subject>Earth</dc:subject>
+                    <dc:subject>Mercury</dc:subject>
+                    <dc:description>The Center for Earth and Planetary Studies (CEPS) conducts an active research program in planetary and terrestrial geology and geophysics using remote sensing data from Earth-orbiting satellites and manned and unmanned space missions. The scope of research activities includes work on Mercury, Venus, the Moon, Mars, and the Galilean satellites, and corresponding field studies in terrestrial analog regions.</dc:description>
+                    <dct:created xsi:type="dct:W3CDTF">2003-10-10T19:16:45Z</dct:created>
+                    <dct:modified xsi:type="dct:W3CDTF">2003-12-02T22:24:31Z</dct:modified>
+                    <dct:dateSubmitted xsi:type="dct:W3CDTF">2003-10-10T19:16:45Z</dct:dateSubmitted>
+                    <dct:dateAccepted xsi:type="dct:W3CDTF">2003-12-03T20:37:35Z</dct:dateAccepted>
+                    <dct:dateAccepted xsi:type="dct:W3CDTF">2003-10-10T19:16:45Z</dct:dateAccepted>
+                    <dct:created xsi:type="dct:W3CDTF">2003-05-28T22:40:47Z</dct:created>
+                    <dc:type>Reference</dc:type>
+                    <dc:type>Image set</dc:type>
+                    <dc:type>Research study</dc:type>
+                    <dc:format xsi:type="dct:IMT">image/gif</dc:format>
+                    <dc:format xsi:type="dct:IMT">image/jpeg</dc:format>
+                    <dc:format xsi:type="dct:IMT">text/html</dc:format>
+                    <dc:identifier xsi:type="dct:URI">http://www.nasm.si.edu/research/ceps/</dc:identifier>
+                    <dc:identifier>compadre.org:100</dc:identifier>
+                    <dc:language xsi:type="dct:RFC3066">en</dc:language>
+                    <dc:rights>Has a copyright or other restriction.</dc:rights>
+                    <dc:rights>Copyright 1994-2001, National Air and Space Museum</dc:rights>
+                    <dct:audience>Teacher</dct:audience>
+                    <dct:audience>Learner</dct:audience>
+                    <dct:audience>Researcher</dct:audience>
+                </nsdl_dc:nsdl_dc>
+            </metadata>
+            <about>
+                <nsdl_about xmlns="http://ns.nsdl.org/nsdl_about_v1.00" schemaVersion="1.00.000" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ns.nsdl.org/nsdl_about_v1.00 http://ns.nsdl.org/schemas/nsdl_about/nsdl_about_v1.00.xsd">
+                    <brand>
+                        <iconURL>http://crs.nsdl.org/brands/439869.jpg</iconURL>
+                        <title>comPADRE: Resources for physics and astronomy education</title>
+                        <width>100</width>
+                        <height>20</height>
+                    </brand>
+                    <category>item</category>
+                    <firstCreated>2004-04-13T20:30:58Z</firstCreated>
+                    <primaryIdentifier>http://www.nasm.si.edu/research/ceps/</primaryIdentifier>
+                    <link linkType="primaryCollection">oai:nsdl.org:nsdl.nsdl:439869</link>
+                </nsdl_about>
+            </about>
+            <about>
+                <provenance xmlns="http://ns.nsdl.org/provenance_about_v1.00" schemaVersion="1.00.000" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ns.nsdl.org/provenance_about_v1.00 http://ns.nsdl.org/schemas/provenance_about/provenance_about_v1.00.xsd">
+                    <originDescription altered="true" harvestDate="2007-12-03T18:15:31Z">
+                        <harvestType>OAI2.0</harvestType>
+                        <dataSource public="true">http://www.compadre.org/OAI/2/OAI.cfm</dataSource>
+                        <identifier>oai:compadre.org:100</identifier>
+                        <datestamp>2007-02-05T06:14:02Z</datestamp>
+                        <metadataNamespace>http://ns.nsdl.org/nsdl_dc_v1.01</metadataNamespace>
+                    </originDescription>
+                </provenance>
+            </about>
+        </record>
+        <record>
+            <header>
+                <identifier>oai:nsdl.org:439869:oai:compadre.org:1001</identifier>
+                <datestamp>2007-12-03T20:10:49Z</datestamp>
+                <setSpec>439869</setSpec>
+            </header>
+            <metadata>
+                <nsdl_dc:nsdl_dc xmlns:nsdl_dc="http://ns.nsdl.org/nsdl_dc_v1.02/" schemaVersion="1.02.000" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dct="http://purl.org/dc/terms/" xmlns:ieee="http://www.ieee.org/xsd/LOMv1p0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ns.nsdl.org/nsdl_dc_v1.02/ http://ns.nsdl.org/schemas/nsdl_dc/nsdl_dc_v1.02.xsd">
+                    <dc:title>The Pluto Portal</dc:title>
+                    <dc:subject>Charon</dc:subject>
+                    <dc:subject>exploration</dc:subject>
+                    <dc:subject>Kuiper Belt</dc:subject>
+                    <dc:subject>Astronomy</dc:subject>
+                    <dc:subject>planets</dc:subject>
+                    <dc:subject>Solar System</dc:subject>
+                    <dc:subject>Pluto</dc:subject>
+                    <dc:description>This website provides information on Pluto, Charon, and the Kuiper Belt. It also discusses important people who have been involved with discovering information on Pluto, possible future missions to Pluto, and the spacecraft that could be used and the people who designed it.</dc:description>
+                    <dc:contributor>Dr. S. Alan Stern</dc:contributor>
+                    <dct:created xsi:type="dct:W3CDTF">2004-02-22T19:55:24Z</dct:created>
+                    <dct:modified xsi:type="dct:W3CDTF">2005-06-07T17:42:35Z</dct:modified>
+                    <dct:modified xsi:type="dct:W3CDTF">2004-06-16T00:40:46Z</dct:modified>
+                    <dct:dateAccepted xsi:type="dct:W3CDTF">2005-06-07T17:42:42Z</dct:dateAccepted>
+                    <dct:modified xsi:type="dct:W3CDTF">2005-08-16T20:28:46Z</dct:modified>
+                    <dc:type>Reference</dc:type>
+                    <dc:format xsi:type="dct:IMT">text/html</dc:format>
+                    <dc:identifier xsi:type="dct:URI">http://www.plutoportal.net/</dc:identifier>
+                    <dc:identifier>compadre.org:1001</dc:identifier>
+                    <dc:language xsi:type="dct:RFC3066">en</dc:language>
+                    <dc:rights>Has a copyright or other restriction.</dc:rights>
+                    <dc:rights>Dr. S. Alan Stern</dc:rights>
+                    <dct:audience>Learner</dct:audience>
+                </nsdl_dc:nsdl_dc>
+            </metadata>
+            <about>
+                <nsdl_about xmlns="http://ns.nsdl.org/nsdl_about_v1.00" schemaVersion="1.00.000" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ns.nsdl.org/nsdl_about_v1.00 http://ns.nsdl.org/schemas/nsdl_about/nsdl_about_v1.00.xsd">
+                    <brand>
+                        <iconURL>http://crs.nsdl.org/brands/439869.jpg</iconURL>
+                        <title>comPADRE: Resources for physics and astronomy education</title>
+                        <width>100</width>
+                        <height>20</height>
+                    </brand>
+                    <category>item</category>
+                    <firstCreated>2005-06-17T16:34:18Z</firstCreated>
+                    <primaryIdentifier>http://www.plutoportal.net/</primaryIdentifier>
+                    <link linkType="primaryCollection">oai:nsdl.org:nsdl.nsdl:439869</link>
+                </nsdl_about>
+            </about>
+            <about>
+                <provenance xmlns="http://ns.nsdl.org/provenance_about_v1.00" schemaVersion="1.00.000" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ns.nsdl.org/provenance_about_v1.00 http://ns.nsdl.org/schemas/provenance_about/provenance_about_v1.00.xsd">
+                    <originDescription altered="true" harvestDate="2007-12-03T18:15:31Z">
+                        <harvestType>OAI2.0</harvestType>
+                        <dataSource public="true">http://www.compadre.org/OAI/2/OAI.cfm</dataSource>
+                        <identifier>oai:compadre.org:1001</identifier>
+                        <datestamp>2007-02-05T06:14:02Z</datestamp>
+                        <metadataNamespace>http://ns.nsdl.org/nsdl_dc_v1.01</metadataNamespace>
+                    </originDescription>
+                </provenance>
+            </about>
+        </record>
+        <record>
+            <header>
+                <identifier>oai:nsdl.org:439869:oai:compadre.org:1002</identifier>
+                <datestamp>2007-12-03T20:10:50Z</datestamp>
+                <setSpec>439869</setSpec>
+            </header>
+            <metadata>
+                <nsdl_dc:nsdl_dc xmlns:nsdl_dc="http://ns.nsdl.org/nsdl_dc_v1.02/" schemaVersion="1.02.000" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dct="http://purl.org/dc/terms/" xmlns:ieee="http://www.ieee.org/xsd/LOMv1p0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ns.nsdl.org/nsdl_dc_v1.02/ http://ns.nsdl.org/schemas/nsdl_dc/nsdl_dc_v1.02.xsd">
+                    <dc:title>Pluto: The Discovery of Planet X</dc:title>
+                    <dc:creator>Brad Mager</dc:creator>
+                    <dc:subject>history</dc:subject>
+                    <dc:subject>discovery</dc:subject>
+                    <dc:subject>planets</dc:subject>
+                    <dc:subject>Charon</dc:subject>
+                    <dc:subject>Lowell</dc:subject>
+                    <dc:subject>Historical Astronomy</dc:subject>
+                    <dc:subject>Pluto</dc:subject>
+                    <dc:subject>Solar System</dc:subject>
+                    <dc:subject>Astronomy</dc:subject>
+                    <dc:description>This site discusses the history of the discovery of Pluto. It talks about the basic facts that are known about Pluto and then dives into an extensive monologue on how Pluto was eventually discovered. Key discoverers are mentioned and how they came to their conclusions.</dc:description>
+                    <dc:description>This site discusses the history of the discovery of Pluto. It talks about the basic facts that are known about Pluto and an conatins an extensive monologue on how Pluto was eventually discovered. Key discoverers are mentioned and how they came to their conclusions.</dc:description>
+                    <dct:created xsi:type="dct:W3CDTF">2004-02-22T19:59:16Z</dct:created>
+                    <dct:modified xsi:type="dct:W3CDTF">2004-06-16T00:52:23Z</dct:modified>
+                    <dct:modified xsi:type="dct:W3CDTF">2005-06-07T17:52:44Z</dct:modified>
+                    <dct:dateAccepted xsi:type="dct:W3CDTF">2005-06-07T17:52:52Z</dct:dateAccepted>
+                    <dct:modified xsi:type="dct:W3CDTF">2005-08-16T19:41:47Z</dct:modified>
+                    <dc:type>Reference</dc:type>
+                    <dc:format xsi:type="dct:IMT">text/html</dc:format>
+                    <dc:identifier xsi:type="dct:URI">http://www.discoveryofpluto.com/index.html</dc:identifier>
+                    <dc:identifier>compadre.org:1002</dc:identifier>
+                    <dc:language xsi:type="dct:RFC3066">en</dc:language>
+                    <dc:rights>Has a copyright or other restriction.</dc:rights>
+                    <dc:rights>Brad Mager</dc:rights>
+                    <dct:audience>Learner</dct:audience>
+                </nsdl_dc:nsdl_dc>
+            </metadata>
+            <about>
+                <nsdl_about xmlns="http://ns.nsdl.org/nsdl_about_v1.00" schemaVersion="1.00.000" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ns.nsdl.org/nsdl_about_v1.00 http://ns.nsdl.org/schemas/nsdl_about/nsdl_about_v1.00.xsd">
+                    <brand>
+                        <iconURL>http://crs.nsdl.org/brands/439869.jpg</iconURL>
+                        <title>comPADRE: Resources for physics and astronomy education</title>
+                        <width>100</width>
+                        <height>20</height>
+                    </brand>
+                    <category>item</category>
+                    <firstCreated>2005-06-17T16:34:19Z</firstCreated>
+                    <primaryIdentifier>http://www.discoveryofpluto.com/index.html</primaryIdentifier>
+                    <link linkType="primaryCollection">oai:nsdl.org:nsdl.nsdl:439869</link>
+                </nsdl_about>
+            </about>
+            <about>
+                <provenance xmlns="http://ns.nsdl.org/provenance_about_v1.00" schemaVersion="1.00.000" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ns.nsdl.org/provenance_about_v1.00 http://ns.nsdl.org/schemas/provenance_about/provenance_about_v1.00.xsd">
+                    <originDescription altered="true" harvestDate="2007-12-03T18:15:31Z">
+                        <harvestType>OAI2.0</harvestType>
+                        <dataSource public="true">http://www.compadre.org/OAI/2/OAI.cfm</dataSource>
+                        <identifier>oai:compadre.org:1002</identifier>
+                        <datestamp>2007-02-05T06:14:02Z</datestamp>
+                        <metadataNamespace>http://ns.nsdl.org/nsdl_dc_v1.01</metadataNamespace>
+                    </originDescription>
+                </provenance>
+            </about>
+        </record>
+        <record>
+            <header>
+                <identifier>oai:nsdl.org:439869:oai:compadre.org:1003</identifier>
+                <datestamp>2007-12-03T20:10:51Z</datestamp>
+                <setSpec>439869</setSpec>
+            </header>
+            <metadata>
+                <nsdl_dc:nsdl_dc xmlns:nsdl_dc="http://ns.nsdl.org/nsdl_dc_v1.02/" schemaVersion="1.02.000" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dct="http://purl.org/dc/terms/" xmlns:ieee="http://www.ieee.org/xsd/LOMv1p0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ns.nsdl.org/nsdl_dc_v1.02/ http://ns.nsdl.org/schemas/nsdl_dc/nsdl_dc_v1.02.xsd">
+                    <dc:title>Lösungen der 1-dimensionalen zeitunabhängigen Schrödinger DGL</dc:title>
+                    <dc:title>Solutions to the One-dimensional Time-independent Schrodinger Equation</dc:title>
+                    <dc:creator>Wolfgang Christian</dc:creator>
+                    <dc:subject>potential</dc:subject>
+                    <dc:subject>bound states</dc:subject>
+                    <dc:subject>energy levels</dc:subject>
+                    <dc:subject>Quantum Physics</dc:subject>
+                    <dc:subject xsi:type="nsdl_dc:GEM">Science</dc:subject>
+                    <dc:subject xsi:type="nsdl_dc:GEM">Physics</dc:subject>
+                    <dc:subject>Bound State Systems</dc:subject>
+                    <dc:description>This site contains an applet to plot wave functions and energy levels for arbitrary potentials, to be input by the user. Several standard potentials are included for selection, including square wells, multi-wells, and a harmonic potential. Users can change the energy of states to observe physical and non-physical states, and explore eigenfunction solutions.</dc:description>
+                    <dct:created xsi:type="dct:W3CDTF">2004-02-22T20:08:18Z</dct:created>
+                    <dct:dateAccepted xsi:type="dct:W3CDTF">2004-03-29T19:31:27Z</dct:dateAccepted>
+                    <dct:dateCopyrighted xsi:type="dct:W3CDTF">2002</dct:dateCopyrighted>
+                    <dct:modified xsi:type="dct:W3CDTF">2004-03-29T19:50:59Z</dct:modified>
+                    <dc:type>Simulation</dc:type>
+                    <dc:type>Activity</dc:type>
+                    <dc:format>application/java</dc:format>
+                    <dc:identifier xsi:type="dct:URI">http://www.schulphysik.de/java/physlet/applets/quant2.html</dc:identifier>
+                    <dc:identifier>compadre.org:1003</dc:identifier>
+                    <dc:source>oai:compadre.org:1014</dc:source>
+                    <dc:language xsi:type="dct:RFC3066">en</dc:language>
+                    <dc:relation>isBasedOn oai:compadre.org:1014</dc:relation>
+                    <dc:rights>Has a copyright or other restriction.</dc:rights>
+                    <dc:rights>Copyright, Wolfgang Christian</dc:rights>
+                    <dct:audience>Learner</dct:audience>
+                    <dct:audience>Teacher</dct:audience>
+                </nsdl_dc:nsdl_dc>
+            </metadata>
+            <about>
+                <nsdl_about xmlns="http://ns.nsdl.org/nsdl_about_v1.00" schemaVersion="1.00.000" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ns.nsdl.org/nsdl_about_v1.00 http://ns.nsdl.org/schemas/nsdl_about/nsdl_about_v1.00.xsd">
+                    <brand>
+                        <iconURL>http://crs.nsdl.org/brands/439869.jpg</iconURL>
+                        <title>comPADRE: Resources for physics and astronomy education</title>
+                        <width>100</width>
+                        <height>20</height>
+                    </brand>
+                    <category>item</category>
+                    <firstCreated>2004-04-13T20:32:22Z</firstCreated>
+                    <primaryIdentifier>http://www.schulphysik.de/java/physlet/applets/quant2.html</primaryIdentifier>
+                    <link linkType="primaryCollection">oai:nsdl.org:nsdl.nsdl:439869</link>
+                </nsdl_about>
+            </about>
+            <about>
+                <provenance xmlns="http://ns.nsdl.org/provenance_about_v1.00" schemaVersion="1.00.000" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ns.nsdl.org/provenance_about_v1.00 http://ns.nsdl.org/schemas/provenance_about/provenance_about_v1.00.xsd">
+                    <originDescription altered="true" harvestDate="2007-12-03T18:15:31Z">
+                        <harvestType>OAI2.0</harvestType>
+                        <dataSource public="true">http://www.compadre.org/OAI/2/OAI.cfm</dataSource>
+                        <identifier>oai:compadre.org:1003</identifier>
+                        <datestamp>2007-02-05T06:14:02Z</datestamp>
+                        <metadataNamespace>http://ns.nsdl.org/nsdl_dc_v1.01</metadataNamespace>
+                    </originDescription>
+                </provenance>
+            </about>
+        </record>
+        <record>
+            <header>
+                <identifier>oai:nsdl.org:439869:oai:compadre.org:1005</identifier>
+                <datestamp>2007-12-03T20:10:51Z</datestamp>
+                <setSpec>439869</setSpec>
+            </header>
+            <metadata>
+                <nsdl_dc:nsdl_dc xmlns:nsdl_dc="http://ns.nsdl.org/nsdl_dc_v1.02/" schemaVersion="1.02.000" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dct="http://purl.org/dc/terms/" xmlns:ieee="http://www.ieee.org/xsd/LOMv1p0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ns.nsdl.org/nsdl_dc_v1.02/ http://ns.nsdl.org/schemas/nsdl_dc/nsdl_dc_v1.02.xsd">
+                    <dc:title>Presolar Grains in Meteorites</dc:title>
+                    <dc:creator>Larry R. Nittler</dc:creator>
+                    <dc:subject>star dust</dc:subject>
+                    <dc:subject>space rocks</dc:subject>
+                    <dc:subject>meteor</dc:subject>
+                    <dc:subject>Astronomy</dc:subject>
+                    <dc:subject>Meteors</dc:subject>
+                    <dc:subject>Solar System</dc:subject>
+                    <dc:description>This site offers information about presolar grains. It discusses what they are, how to identify them, the different kinds, and what can be learned from presolar grains. If you need more information there are additional links to go to.</dc:description>
+                    <dct:created xsi:type="dct:W3CDTF">2004-02-22T20:40:52Z</dct:created>
+                    <dct:modified xsi:type="dct:W3CDTF">2005-06-07T17:53:42Z</dct:modified>
+                    <dct:modified xsi:type="dct:W3CDTF">2004-06-16T01:05:31Z</dct:modified>
+                    <dct:dateCopyrighted xsi:type="dct:W3CDTF">1999</dct:dateCopyrighted>
+                    <dct:dateAccepted xsi:type="dct:W3CDTF">2005-06-07T17:53:50Z</dct:dateAccepted>
+                    <dct:modified xsi:type="dct:W3CDTF">2005-08-16T20:16:55Z</dct:modified>
+                    <dc:type>Reference</dc:type>
+                    <dc:format xsi:type="dct:IMT">text/html</dc:format>
+                    <dc:identifier xsi:type="dct:URI">http://www.ciw.edu/lrn/psg_main.html</dc:identifier>
+                    <dc:identifier>compadre.org:1005</dc:identifier>
+                    <dc:language xsi:type="dct:RFC3066">en</dc:language>
+                    <dc:rights>Has a copyright or other restriction.</dc:rights>
+                    <dc:rights>Larry R. Nittler</dc:rights>
+                    <dct:audience>Learner</dct:audience>
+                </nsdl_dc:nsdl_dc>
+            </metadata>
+            <about>
+                <nsdl_about xmlns="http://ns.nsdl.org/nsdl_about_v1.00" schemaVersion="1.00.000" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ns.nsdl.org/nsdl_about_v1.00 http://ns.nsdl.org/schemas/nsdl_about/nsdl_about_v1.00.xsd">
+                    <brand>
+                        <iconURL>http://crs.nsdl.org/brands/439869.jpg</iconURL>
+                        <title>comPADRE: Resources for physics and astronomy education</title>
+                        <width>100</width>
+                        <height>20</height>
+                    </brand>
+                    <category>item</category>
+                    <firstCreated>2005-06-17T16:34:19Z</firstCreated>
+                    <primaryIdentifier>http://www.ciw.edu/lrn/psg_main.html</primaryIdentifier>
+                    <link linkType="primaryCollection">oai:nsdl.org:nsdl.nsdl:439869</link>
+                </nsdl_about>
+            </about>
+            <about>
+                <provenance xmlns="http://ns.nsdl.org/provenance_about_v1.00" schemaVersion="1.00.000" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ns.nsdl.org/provenance_about_v1.00 http://ns.nsdl.org/schemas/provenance_about/provenance_about_v1.00.xsd">
+                    <originDescription altered="true" harvestDate="2007-12-03T18:15:31Z">
+                        <harvestType>OAI2.0</harvestType>
+                        <dataSource public="true">http://www.compadre.org/OAI/2/OAI.cfm</dataSource>
+                        <identifier>oai:compadre.org:1005</identifier>
+                        <datestamp>2007-02-05T06:14:02Z</datestamp>
+                        <metadataNamespace>http://ns.nsdl.org/nsdl_dc_v1.01</metadataNamespace>
+                    </originDescription>
+                </provenance>
+            </about>
+        </record>
+        <resumptionToken>set=439869&amp;metadataPrefix=nsdl_dc&amp;origRequestTime=2008-01-31T18:52:38Z&amp;expireOnUpdate=false&amp;resumeAfter=oai:nsdl.org:439869:oai:compadre.org:142</resumptionToken>
+    </ListRecords>
+</OAI-PMH>
