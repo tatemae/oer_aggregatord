@@ -75,7 +75,7 @@ public class Harvester extends DBThread
 		"FROM feeds LEFT OUTER JOIN services ON (feeds.service_id = services.id) ";
 	private static final String STALE_FEEDS_CONDITION =
 //		"WHERE feeds.id = 105523006 ";
-		"WHERE failed_requests < 10 AND (timestampdiff(minute, last_requested_at, now()) > harvest_interval OR last_harvested_at IS NULL) AND feeds.id != 0 AND feeds.status >= 0 ";
+		"WHERE failed_requests < 10 AND (timestampdiff(second, last_requested_at, now()) > harvest_interval OR last_harvested_at IS NULL) AND feeds.id != 0 AND feeds.status >= 0 ";
 	private static final String QUERY_STALE_FEEDS = 
 		QUERY_FEEDS + STALE_FEEDS_CONDITION + "ORDER BY feeds.priority";
 
@@ -110,8 +110,8 @@ public class Harvester extends DBThread
 	
 	private Statement stNextID;
 	
-	public static final int DEFAULT_FEED_REFRESH_INTERVAL = 24*60*60; // 24 hours
-	public static int nFeedHarvestInterval = DEFAULT_FEED_REFRESH_INTERVAL;
+	public static final int DEFAULT_FEED_HARVEST_INTERVAL = 86400; // 24 hours (24*60*60 seconds)
+	public static int nFeedHarvestInterval = DEFAULT_FEED_HARVEST_INTERVAL;
 	
 	public static final int DEFAULT_CONNECTION_TIMEOUT = 180; // seconds
 	public static int nConnectionTimeout = DEFAULT_CONNECTION_TIMEOUT;
