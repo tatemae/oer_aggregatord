@@ -97,14 +97,16 @@ public class Harvester extends DBThread
 	private PreparedStatement stFindDuplicateOAIEntries;
 	private PreparedStatement pstFlagEntryDeleted;
 	private PreparedStatement stGetServiceURI;
-	private PreparedStatement stGetTagID;
+	private PreparedStatement stGetsubjectsID;
 
 	private PreparedStatement stAddFeed;
 	private PreparedStatement stAddEntry;
 	private PreparedStatement stUpdateEntry;
 	private PreparedStatement stAddEntryImage;
-	private PreparedStatement stAddTag;
-	private PreparedStatement stAddTagForEntry;
+	private PreparedStatement stAddSubjects;
+	private PreparedStatement stAddSubjectsForEntry;
+	//private PreparedStatement stAddTag;
+	//private PreparedStatement stAddTagForEntry;
 
 	private PreparedStatement stUpdateFeedInfo;
 	
@@ -160,14 +162,16 @@ public class Harvester extends DBThread
         pstFlagEntryDeleted = cnWorker.prepareStatement("UPDATE entries SET oai_identifier = 'deleted' WHERE id = ?"); 
         
 		stGetServiceURI = cnWorker.prepareStatement("SELECT api_uri FROM services WHERE id = ?");
-		stGetTagID = cnWorker.prepareStatement("SELECT id FROM tags WHERE name = ?");
+		stGetsubjectsID = cnWorker.prepareStatement("SELECT id FROM subjects WHERE name = ?");
 
 		stAddFeed = cnWorker.prepareStatement("INSERT INTO feeds (id, uri, title, harvest_interval, last_harvested_at, created_at, updated_at, service_id) VALUES (?,?,?,?,?,?,?,?)");
-		stAddEntry = cnWorker.prepareStatement("INSERT INTO entries (feed_id, permalink, author, title, description, content, unique_content, tag_list, published_at, entry_updated_at, oai_identifier, language, harvested_at, direct_link) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-		stUpdateEntry = cnWorker.prepareStatement("UPDATE entries SET feed_id = ?, permalink = ?, author = ?, title = ?, description = ?, content = ?, unique_content = ?, tag_list = ?, published_at = ?, entry_updated_at = ?, oai_identifier = ?, language = ?, harvested_at = ?, direct_link = ? WHERE id = ?");
+		//stAddEntry = cnWorker.prepareStatement("INSERT INTO entries (feed_id, permalink, author, title, description, content, unique_content, tag_list, published_at, entry_updated_at, oai_identifier, language, harvested_at, direct_link) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+		stAddEntry = cnWorker.prepareStatement("INSERT INTO entries (feed_id, permalink, author, title, description, content, unique_content, published_at, entry_updated_at, oai_identifier, language, harvested_at, direct_link) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
+		//stUpdateEntry = cnWorker.prepareStatement("UPDATE entries SET feed_id = ?, permalink = ?, author = ?, title = ?, description = ?, content = ?, unique_content = ?, tag_list = ?, published_at = ?, entry_updated_at = ?, oai_identifier = ?, language = ?, harvested_at = ?, direct_link = ? WHERE id = ?");
+		stUpdateEntry = cnWorker.prepareStatement("UPDATE entries SET feed_id = ?, permalink = ?, author = ?, title = ?, description = ?, content = ?, unique_content = ?, published_at = ?, entry_updated_at = ?, oai_identifier = ?, language = ?, harvested_at = ?, direct_link = ? WHERE id = ?");
 		stAddEntryImage = cnWorker.prepareStatement("INSERT INTO entry_images (entry_id, uri, link, alt, title, width, height) VALUES (?,?,?,?,?,?,?)");
-		stAddTag = cnWorker.prepareStatement("INSERT INTO tags (name, created_at) VALUES (?,?)");
-		stAddTagForEntry = cnWorker.prepareStatement("INSERT INTO entries_tags (entry_id, tag_id) VALUES (?,?)");
+		stAddSubjects = cnWorker.prepareStatement("INSERT INTO subjects (name) VALUES (?)");
+		stAddSubjectsForEntry = cnWorker.prepareStatement("INSERT INTO entries_subjects (entry_id, subject_id) VALUES (?,?)");
 
 //		stUpdateFeedInfo = cnWorker.prepareStatement("UPDATE feeds SET last_harvested_at = ?, priority = ?, failed_requests = 0, display_uri = ?, description = ?, tag_cloud_short = ?, tag_cloud_long = ? WHERE id = ?");
 		stUpdateFeedInfo = cnWorker.prepareStatement("UPDATE feeds SET last_harvested_at = ?, priority = ?, failed_requests = 0, last_requested_at = ?, error_message = NULL, display_uri = ?, description = ?, title = ? WHERE id = ?");
@@ -188,7 +192,7 @@ public class Harvester extends DBThread
 			nLoc = 1;
 			if (stGetServiceURI != null) stGetServiceURI.close();
 			nLoc = 2;
-			if (stGetTagID != null) stGetTagID.close();
+		//	if (stGetTagID != null) stGetTagID.close();
 			nLoc = 3;
 			
 			if (stAddFeed != null) stAddFeed.close();
@@ -198,9 +202,9 @@ public class Harvester extends DBThread
 			nLoc = 5;
 			if (stAddEntryImage != null) stAddEntryImage.close();
 			nLoc = 6;
-			if (stAddTag != null) stAddTag.close();
+		//	if (stAddTag != null) stAddTag.close();
 			nLoc = 7;
-			if (stAddTagForEntry != null) stAddTagForEntry.close();
+			//if (stAddTagForEntry != null) stAddTagForEntry.close();
 			nLoc = 8;
 
 			if (stUpdateFeedInfo != null) stUpdateFeedInfo.close();
@@ -220,13 +224,13 @@ public class Harvester extends DBThread
 		stFindDuplicateOAIEntries = null;
 		pstFlagEntryDeleted = null;
 		stGetServiceURI = null;
-		stGetTagID = null;
+		//stGetTagID = null;
 		stAddFeed = null;
 		stAddEntry = null;
 		stUpdateEntry = null;
 		stAddEntryImage = null;
-		stAddTag = null;
-		stAddTagForEntry = null;
+		//stAddTag = null;
+		//stAddTagForEntry = null;
 		stUpdateFeedInfo = null;
 		stNextID = null;
 //		stGetFeedTagCloudShort = null;
@@ -317,7 +321,8 @@ public class Harvester extends DBThread
             
             // loop through the entries
     		Timestamp currentTime = currentTime();
-    		final String[] asTags = new String[]{};
+    		//final String[] asTags = new String[]{};
+    		final String[] asSubjects = new String[]{};
             while (merlotHarvester.hasMoreEntries()&& nNewEntries < nMaxEntries)
             {
             	// get info about the entry
@@ -329,7 +334,7 @@ public class Harvester extends DBThread
             		// keep track of the number of new entries
             		nNewEntries++;
             		String sOAIIdentifier = getForeignMarkupValue(entry, "oai_identifier");
-            		addOrUpdateRSSEntry(stAddEntry, feedInfo, entry, null, null, entry.getLink(), asTags, currentTime, sOAIIdentifier, 0);
+            		addOrUpdateRSSEntry(stAddEntry, feedInfo, entry, null, null, entry.getLink(), asSubjects, currentTime, sOAIIdentifier, 0);
             	}
             }
     		// update the feed last updated and priority
@@ -373,7 +378,7 @@ public class Harvester extends DBThread
 		stAddEntry.setBoolean(7, false);
 
 		// tag_list
-		stAddEntry.setString(8, entry.getTag());
+		//stAddEntry.setString(8, entry.getTag());
 
 		// published_at
 		Timestamp currentTime = currentTime();
@@ -381,19 +386,19 @@ public class Harvester extends DBThread
 		Date publishedDate = entry.getTimeAsDate();
 		if (publishedDate == null) publishedTime = currentTime;
 		else publishedTime = new Timestamp(publishedDate.getTime());
-		stAddEntry.setTimestamp(9, publishedTime);
+		stAddEntry.setTimestamp(8, publishedTime);
 		
 		// updated_at
-		stAddEntry.setTimestamp(10, publishedTime);
+		stAddEntry.setTimestamp(9, publishedTime);
 
 		// oai_identifier
-		stAddEntry.setString(11, null);
+		stAddEntry.setString(10, null);
 		
 		// author
-		stAddEntry.setString(12, null);
+		stAddEntry.setString(11, null);
 		
 		// direct_link
-		stAddEntry.setString(13, null);
+		stAddEntry.setString(12, null);
 
 		stAddEntry.executeUpdate();
 		return getLastID(stAddEntry);
@@ -464,7 +469,7 @@ public class Harvester extends DBThread
             		// add the entry now (as part of a batch update)
             		int nEntryID = addDeliciousEntry(feedInfo,entry);
 //            		Logger.info("Adding tags for entry: " + entry.getTag());
-            		addTagsForEntry(nEntryID, feedInfo.nOwnerID, entry.getTagsAsArray(" "));
+            		addSubjectsForEntry(nEntryID,entry.getTagsAsArray(" "));
             	}
             }
     		// update the feed last updated and priorty
@@ -484,7 +489,6 @@ public class Harvester extends DBThread
 			handleFailedRequest(feedInfo);
 		}
 	}
-
 	private void handleFailedRequest(FeedInfo feedInfo)
 	{
 //		Logger.info("Error occured retrieving " + feedInfo.sURI + "\n" + e);
@@ -821,16 +825,16 @@ public class Harvester extends DBThread
         		else existingEntry = getEntry(feedInfo.nFeedID, sPermalink/*, updatedTime*/);
         		
         		// get tags for the entry
-        		String[] asTags = getRSSTags(entry, dcm);
-        		
+        		//String[] asTags = getRSSTags(entry, dcm);
+        		String[] asSubjects=getRSSSubjects(entry, dcm);
             	// entry with the same permalink doesn't already exist in the database
         		if (existingEntry == null)
             	{
-            		if (entryTagsOverlapFilterTags(asTags, hsFilterTags))
+            		if (entryTagsOverlapFilterTags(asSubjects, hsFilterTags))
             		{
 	            		try
 	            		{
-			            	addOrUpdateRSSEntry(stAddEntry, feedInfo, entry, dcm, dctm, sPermalink, asTags, updatedTime, sOAIIdentifier, 0);
+			            	addOrUpdateRSSEntry(stAddEntry, feedInfo, entry, dcm, dctm, sPermalink, asSubjects, updatedTime, sOAIIdentifier, 0);
 		            		nNewEntries++;
 	            		}
 		            	catch (Exception e)
@@ -844,7 +848,7 @@ public class Harvester extends DBThread
         		// there is already an entry in the db with the same permalink 
         		else if (existingEntry.date.before(entry.getPublishedDate()))
         		{
-        			addOrUpdateRSSEntry(stUpdateEntry, feedInfo, entry, dcm, dctm, sPermalink, asTags, updatedTime, sOAIIdentifier, existingEntry.nEntryID);
+        			addOrUpdateRSSEntry(stUpdateEntry, feedInfo, entry, dcm, dctm, sPermalink, asSubjects, updatedTime, sOAIIdentifier, existingEntry.nEntryID);
         			nUpdatedEntries++;
         		}
             }
@@ -986,8 +990,57 @@ public class Harvester extends DBThread
 		// lets drop MIT from the title
 		return sTitle.replace(" (MIT)","");
 	}
+	private void addSubjectsForEntry(int nEntryID, String[] asSubjects) throws SQLException
+	{
+		int nAddedSubjects = 0;
+		for (int nSubject = 0; nSubject < asSubjects.length; nSubject++)
+		{
+			if (asSubjects[nSubject].length() > 0)
+			{
+				stAddSubjectsForEntry.setInt(1, nEntryID);
+				int nSubjectID = getSubjectID(asSubjects[nSubject]); 
+				stAddSubjectsForEntry.setInt(2, nSubjectID);
+				stAddSubjectsForEntry.addBatch();
+				nAddedSubjects++;
+			}
+		}
+		if (nAddedSubjects > 0) stAddSubjectsForEntry.executeBatch();
+	}
 	
-	private int addOrUpdateRSSEntry(PreparedStatement st, FeedInfo feedInfo, SyndEntry entry, DCModule dcm, DCTermsModule dctm, String sURI, String[] asTags, Timestamp updatedAt, String sOAIIdentifier, int nEntryID) throws SQLException
+	private int addSubject(String sSubject) throws SQLException
+	{
+		// set up the prepared statement
+		stAddSubjects.setString(1, sSubject);
+		// add the feed
+		stAddSubjects.executeUpdate();
+		
+		return getLastID(stAddSubjects);
+	}
+	private int getSubjectID(String sSubject) throws SQLException
+	{
+		sSubject = normalizeSubject(sSubject);
+		
+		// set up the prepared statement
+		stGetsubjectsID.setString(1, sSubject);
+		
+		// do the query
+		ResultSet rs = stGetsubjectsID.executeQuery();
+		
+		// if the tag isn't already in the database, add it now
+		int nSubjectID = 0;
+		if (!rs.next()) nSubjectID = addSubject(sSubject);
+		
+		// return the tag's id
+		else nSubjectID = rs.getInt(1);
+
+		rs.close();
+		return nSubjectID;
+	}
+	private String normalizeSubject(String sTag)
+	{
+		return sTag.replaceAll("\"","").trim();
+	}
+	private int addOrUpdateRSSEntry(PreparedStatement st, FeedInfo feedInfo, SyndEntry entry, DCModule dcm, DCTermsModule dctm, String sURI, String[] asSubjects, Timestamp updatedAt, String sOAIIdentifier, int nEntryID) throws SQLException
 	{
 		// id, feed_id, permalink, author, title, 
 		// description, content, unique_content, tag_list, published_at, 
@@ -1044,11 +1097,11 @@ public class Harvester extends DBThread
 		
 		// tag_list
 		String sTags = "";
-		for (int nTag = 0; nTag < asTags.length; nTag++)
+		/*for (int nTag = 0; nTag < asSubjects.length; nTag++)
 		{
-			sTags += asTags[nTag] + ((nTag == asTags.length - 1) ? "" : " ");
-		}
-		st.setString(8, sTags);
+			sTags += asSubjects[nTag] + ((nTag == asSubjects.length - 1) ? "" : " ");
+		}*/
+	//	st.setString(8, sTags);
 		
 		// published_at
 		Timestamp currentTime = currentTime();
@@ -1057,39 +1110,39 @@ public class Harvester extends DBThread
 		if (publishedDate == null && dctm != null) publishedDate = (Date)dctm.getCreatedDate();
 		if (publishedDate == null || publishedDate.after(currentTime)) publishedTime = currentTime;
 		else publishedTime = new Timestamp(publishedDate.getTime());
-		st.setTimestamp(9, publishedTime);
+		st.setTimestamp(8, publishedTime);
 
 		// updated_at
-		st.setTimestamp(10, updatedAt);
+		st.setTimestamp(9, updatedAt);
 
 		// oai_identifier
-		st.setString(11, sOAIIdentifier);
+		st.setString(10, sOAIIdentifier);
 		
 		// language
 		String sLanguage = dcm.getLanguage();
 		if (sLanguage == null) sLanguage = getForeignMarkupValue(entry, "language");
 		if (sLanguage == null) sLanguage = feedInfo.sLanguage;
 		if (sLanguage == null) sLanguage = "en";
-		st.setString(12, sLanguage);
+		st.setString(11, sLanguage);
 		
 		// harvested at
-		st.setTimestamp(13, currentTime);
+		st.setTimestamp(12, currentTime);
 		
 		// direct link
 		String sDirectLink = getForeignMarkupValue(entry, "direct_link");
 		sDirectLink = normalizeUrl(sDirectLink);
-		st.setString(14, sDirectLink);
+		st.setString(13, sDirectLink);
 		
 		// if we are updating, we specify the id last
-		if (st == stUpdateEntry) st.setInt(15, nEntryID);
+		if (st == stUpdateEntry) st.setInt(14, nEntryID);
 		
 		st.executeUpdate();
 		nEntryID = getLastID(st);
 		
     	// add the tags for the entry
-    	if (nEntryID != 0 && asTags != null) 
+    	if (nEntryID != 0 && asSubjects != null) 
     	{
-    		addTagsForEntry(nEntryID, FeedInfo.OWNER_ID_UNKNOWN, asTags);
+    		addSubjectsForEntry(nEntryID, asSubjects);
 		}
 		// check for microformats in the content:encoded element (where the structured blogging plugin puts them)
 		parseEncodedContent(entry, nEntryID);
@@ -1205,61 +1258,37 @@ public class Harvester extends DBThread
 		return asTags == null ? null : checkForTagLists(asTags);
 	}
 	
-	private void addTagsForEntry(int nEntryID, int nOwnerID, String[] asTags) throws SQLException
-	{
-		int nAddedTags = 0;
-		for (int nTag = 0; nTag < asTags.length; nTag++)
+	private String[] getRSSSubjects(SyndEntry entry, DCModule dcm)
+	{	
+		int nTags = 0;
+		String[] asSubjects = null;
+
+		// try to get tags from the rss categories
+		List lCategories = entry.getCategories();
+		int nCategories = lCategories.size();
+		if (nCategories != 0)
 		{
-			if (asTags[nTag].length() > 0)
+			asSubjects = new String[nCategories];
+			for (ListIterator liCategories = lCategories.listIterator(); liCategories.hasNext();)
 			{
-				stAddTagForEntry.setInt(1, nEntryID);
-				int nTagID = getTagID(asTags[nTag]); 
-				stAddTagForEntry.setInt(2, nTagID);
-				stAddTagForEntry.addBatch();
-				nAddedTags++;
+				SyndCategory category = (SyndCategory)liCategories.next();
+				asSubjects[nTags++] = category.getName().toLowerCase();
 			}
 		}
-		if (nAddedTags > 0) stAddTagForEntry.executeBatch();
+		// if we don't have rss categories, try dublin core subjects
+		else if (dcm != null)
+    	{
+    		List lSubjects = dcm.getSubjects();
+    		asSubjects = new String[lSubjects.size()];
+    		for (ListIterator liSubjects = lSubjects.listIterator(); liSubjects.hasNext();)
+    		{
+    			DCSubject subject = (DCSubject)liSubjects.next();
+    			asSubjects[nTags++] = subject.getValue();
+    		}
+    	}
+		return asSubjects == null ? null : asSubjects;
 	}
 	
-	private int addTag(String sTag) throws SQLException
-	{
-		// set up the prepared statement
-		stAddTag.setString(1, sTag);
-		Timestamp currentTime = currentTime();
-		stAddTag.setTimestamp(2, currentTime);
-
-		// add the feed
-		stAddTag.executeUpdate();
-		
-		return getLastID(stAddTag);
-	}
-	
-	private String normalizeTag(String sTag)
-	{
-		return sTag.replaceAll("\"","").trim();
-	}
-	
-	private int getTagID(String sTag) throws SQLException
-	{
-		sTag = normalizeTag(sTag);
-		
-		// set up the prepared statement
-		stGetTagID.setString(1, sTag);
-		
-		// do the query
-		ResultSet rs = stGetTagID.executeQuery();
-		
-		// if the tag isn't already in the database, add it now
-		int nTagID = 0;
-		if (!rs.next()) nTagID = addTag(sTag);
-		
-		// return the tag's id
-		else nTagID = rs.getInt(1);
-
-		rs.close();
-		return nTagID;
-	}
 	
 	private void addFeed(FeedInfo feedInfo) throws SQLException
 	{
