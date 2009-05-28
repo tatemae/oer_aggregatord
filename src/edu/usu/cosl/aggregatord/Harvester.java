@@ -74,8 +74,8 @@ public class Harvester extends DBThread
 		"services.api_uri, feeds.last_harvested_at, feeds.failed_requests, feeds.harvest_interval, feeds.display_uri, feeds.short_title, tag_filter " +
 		"FROM feeds LEFT OUTER JOIN services ON (feeds.service_id = services.id) ";
 	private static final String STALE_FEEDS_CONDITION =
-//		"WHERE feeds.id = 105523006 ";
-		"WHERE failed_requests < 10 AND (timestampdiff(second, last_requested_at, now()) > harvest_interval OR last_harvested_at IS NULL) AND feeds.id != 0 AND feeds.status >= 0 ";
+	//	"WHERE feeds.id = 7 " ;
+		"WHERE failed_requests < 10 AND feeds.id != 0 AND feeds.status >= 0 ";
 	private static final String QUERY_STALE_FEEDS = 
 		QUERY_FEEDS + STALE_FEEDS_CONDITION + "ORDER BY feeds.priority";
 
@@ -166,7 +166,7 @@ public class Harvester extends DBThread
 
 		stAddFeed = cnWorker.prepareStatement("INSERT INTO feeds (id, uri, title, harvest_interval, last_harvested_at, created_at, updated_at, service_id) VALUES (?,?,?,?,?,?,?,?)");
 		//stAddEntry = cnWorker.prepareStatement("INSERT INTO entries (feed_id, permalink, author, title, description, content, unique_content, tag_list, published_at, entry_updated_at, oai_identifier, language, harvested_at, direct_link) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-		stAddEntry = cnWorker.prepareStatement("INSERT INTO entries (feed_id, permalink, author, title, description, content, unique_content, published_at, entry_updated_at, oai_identifier, language, harvested_at, direct_link) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
+		stAddEntry = cnWorker.prepareStatement("INSERT INTO entries (feed_id, permalink, author, title, description, content, unique_content, tag_list, published_at, entry_updated_at, oai_identifier, language, harvested_at, direct_link) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 		//stUpdateEntry = cnWorker.prepareStatement("UPDATE entries SET feed_id = ?, permalink = ?, author = ?, title = ?, description = ?, content = ?, unique_content = ?, tag_list = ?, published_at = ?, entry_updated_at = ?, oai_identifier = ?, language = ?, harvested_at = ?, direct_link = ? WHERE id = ?");
 		stUpdateEntry = cnWorker.prepareStatement("UPDATE entries SET feed_id = ?, permalink = ?, author = ?, title = ?, description = ?, content = ?, unique_content = ?, published_at = ?, entry_updated_at = ?, oai_identifier = ?, language = ?, harvested_at = ?, direct_link = ? WHERE id = ?");
 		stAddEntryImage = cnWorker.prepareStatement("INSERT INTO entry_images (entry_id, uri, link, alt, title, width, height) VALUES (?,?,?,?,?,?,?)");
@@ -378,7 +378,7 @@ public class Harvester extends DBThread
 		stAddEntry.setBoolean(7, false);
 
 		// tag_list
-		//stAddEntry.setString(8, entry.getTag());
+		stAddEntry.setString(8, entry.getTag());
 
 		// published_at
 		Timestamp currentTime = currentTime();
@@ -386,19 +386,19 @@ public class Harvester extends DBThread
 		Date publishedDate = entry.getTimeAsDate();
 		if (publishedDate == null) publishedTime = currentTime;
 		else publishedTime = new Timestamp(publishedDate.getTime());
-		stAddEntry.setTimestamp(8, publishedTime);
+		stAddEntry.setTimestamp(9, publishedTime);
 		
 		// updated_at
-		stAddEntry.setTimestamp(9, publishedTime);
+		stAddEntry.setTimestamp(10, publishedTime);
 
 		// oai_identifier
-		stAddEntry.setString(10, null);
-		
-		// author
 		stAddEntry.setString(11, null);
 		
-		// direct_link
+		// author
 		stAddEntry.setString(12, null);
+		
+		// direct_link
+		stAddEntry.setString(13, null);
 
 		stAddEntry.executeUpdate();
 		return getLastID(stAddEntry);
@@ -1097,11 +1097,11 @@ public class Harvester extends DBThread
 		
 		// tag_list
 		String sTags = "";
-		/*for (int nTag = 0; nTag < asSubjects.length; nTag++)
+		for (int nTag = 0; nTag < asSubjects.length; nTag++)
 		{
-			sTags += asSubjects[nTag] + ((nTag == asSubjects.length - 1) ? "" : " ");
-		}*/
-	//	st.setString(8, sTags);
+			sTags += asSubjects[nTag] + ((nTag == asSubjects.length - 1) ? "" : "|||");
+		}
+		st.setString(8, sTags);
 		
 		// published_at
 		Timestamp currentTime = currentTime();
@@ -1110,28 +1110,28 @@ public class Harvester extends DBThread
 		if (publishedDate == null && dctm != null) publishedDate = (Date)dctm.getCreatedDate();
 		if (publishedDate == null || publishedDate.after(currentTime)) publishedTime = currentTime;
 		else publishedTime = new Timestamp(publishedDate.getTime());
-		st.setTimestamp(8, publishedTime);
+		st.setTimestamp(9, publishedTime);
 
 		// updated_at
-		st.setTimestamp(9, updatedAt);
+		st.setTimestamp(10, updatedAt);
 
 		// oai_identifier
-		st.setString(10, sOAIIdentifier);
+		st.setString(11, sOAIIdentifier);
 		
 		// language
 		String sLanguage = dcm.getLanguage();
 		if (sLanguage == null) sLanguage = getForeignMarkupValue(entry, "language");
 		if (sLanguage == null) sLanguage = feedInfo.sLanguage;
 		if (sLanguage == null) sLanguage = "en";
-		st.setString(11, sLanguage);
+		st.setString(12, sLanguage);
 		
 		// harvested at
-		st.setTimestamp(12, currentTime);
+		st.setTimestamp(13, currentTime);
 		
 		// direct link
 		String sDirectLink = getForeignMarkupValue(entry, "direct_link");
 		sDirectLink = normalizeUrl(sDirectLink);
-		st.setString(13, sDirectLink);
+		st.setString(14, sDirectLink);
 		
 		// if we are updating, we specify the id last
 		if (st == stUpdateEntry) st.setInt(14, nEntryID);
