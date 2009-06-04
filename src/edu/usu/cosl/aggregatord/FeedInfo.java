@@ -32,7 +32,7 @@ public class FeedInfo
 	public String sErrorMessage;
 	public int nTagsToCache = 0;
 	public String sTagFilter;
-	public String sLanguage = "en";
+	public int nDefaultLanguageID;
 	
 	public static FeedInfo NO_MORE_WORK = new FeedInfo(null,SERVICE_RSS,FEED_ID_UNKNOWN,OWNER_ID_UNKNOWN,null,null,PRIORITY_DEFAULT);
 	

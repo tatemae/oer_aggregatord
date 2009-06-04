@@ -71,7 +71,7 @@ public class Harvester extends DBThread
 	private static Statement stGetStaleFeeds;
 	private static final String QUERY_FEEDS =
 		"SELECT feeds.id, feeds.service_id, feeds.title, feeds.uri, feeds.priority, feeds.login, feeds.password, " +
-		"services.api_uri, feeds.last_harvested_at, feeds.failed_requests, feeds.harvest_interval, feeds.display_uri, feeds.short_title, tag_filter " +
+		"services.api_uri, feeds.last_harvested_at, feeds.failed_requests, feeds.harvest_interval, feeds.display_uri, feeds.short_title, tag_filter, default_language_id " +
 		"FROM feeds LEFT OUTER JOIN services ON (feeds.service_id = services.id) ";
 	private static final String STALE_FEEDS_CONDITION =
 	//	"WHERE feeds.id = 7 " ;
@@ -105,6 +105,7 @@ public class Harvester extends DBThread
 	private PreparedStatement stAddEntryImage;
 	private PreparedStatement stAddSubjects;
 	private PreparedStatement stAddSubjectsForEntry;
+	
 	//private PreparedStatement stAddTag;
 	//private PreparedStatement stAddTagForEntry;
 
@@ -124,6 +125,9 @@ public class Harvester extends DBThread
 	BlockingQueue<String> activeJobsQueue;
 	
 	private HashSet<String> hsStopWords = new HashSet<String>();
+	
+    static private Hashtable<String, Integer> htLanguages = new Hashtable<String, Integer>();
+    static private int nDefaultLanguageID;
 	
 	private SimpleDateFormat sdf;
 	
@@ -165,10 +169,8 @@ public class Harvester extends DBThread
 		stGetsubjectsID = cnWorker.prepareStatement("SELECT id FROM subjects WHERE name = ?");
 
 		stAddFeed = cnWorker.prepareStatement("INSERT INTO feeds (id, uri, title, harvest_interval, last_harvested_at, created_at, updated_at, service_id) VALUES (?,?,?,?,?,?,?,?)");
-		//stAddEntry = cnWorker.prepareStatement("INSERT INTO entries (feed_id, permalink, author, title, description, content, unique_content, tag_list, published_at, entry_updated_at, oai_identifier, language, harvested_at, direct_link) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-		stAddEntry = cnWorker.prepareStatement("INSERT INTO entries (feed_id, permalink, author, title, description, content, unique_content, tag_list, published_at, entry_updated_at, oai_identifier, language, harvested_at, direct_link) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-		//stUpdateEntry = cnWorker.prepareStatement("UPDATE entries SET feed_id = ?, permalink = ?, author = ?, title = ?, description = ?, content = ?, unique_content = ?, tag_list = ?, published_at = ?, entry_updated_at = ?, oai_identifier = ?, language = ?, harvested_at = ?, direct_link = ? WHERE id = ?");
-		stUpdateEntry = cnWorker.prepareStatement("UPDATE entries SET feed_id = ?, permalink = ?, author = ?, title = ?, description = ?, content = ?, unique_content = ?, published_at = ?, entry_updated_at = ?, oai_identifier = ?, language = ?, harvested_at = ?, direct_link = ? WHERE id = ?");
+		stAddEntry = cnWorker.prepareStatement("INSERT INTO entries (feed_id, permalink, author, title, description, content, unique_content, tag_list, published_at, entry_updated_at, oai_identifier, language_id, harvested_at, direct_link) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+		stUpdateEntry = cnWorker.prepareStatement("UPDATE entries SET feed_id = ?, permalink = ?, author = ?, title = ?, description = ?, content = ?, unique_content = ?, published_at = ?, entry_updated_at = ?, oai_identifier = ?, language_id = ?, harvested_at = ?, direct_link = ? WHERE id = ?");
 		stAddEntryImage = cnWorker.prepareStatement("INSERT INTO entry_images (entry_id, uri, link, alt, title, width, height) VALUES (?,?,?,?,?,?,?)");
 		stAddSubjects = cnWorker.prepareStatement("INSERT INTO subjects (name) VALUES (?)");
 		stAddSubjectsForEntry = cnWorker.prepareStatement("INSERT INTO entries_subjects (entry_id, subject_id) VALUES (?,?)");
@@ -327,14 +329,14 @@ public class Harvester extends DBThread
             {
             	// get info about the entry
             	SyndEntry entry = merlotHarvester.next();
-            	
+            	int nLanguageID=getLanguageID(null,entry,feedInfo);
             	// if the entry doesn't already exist in the database
             	if (getEntry(feedInfo.nFeedID, entry.getUri()) == null)
             	{
             		// keep track of the number of new entries
             		nNewEntries++;
             		String sOAIIdentifier = getForeignMarkupValue(entry, "oai_identifier");
-            		addOrUpdateRSSEntry(stAddEntry, feedInfo, entry, null, null, entry.getLink(), asSubjects, currentTime, sOAIIdentifier, 0);
+            		addOrUpdateRSSEntry(stAddEntry, feedInfo, entry, null, null, entry.getLink(), asSubjects, currentTime, sOAIIdentifier, 0,nLanguageID);
             	}
             }
     		// update the feed last updated and priority
@@ -358,17 +360,19 @@ public class Harvester extends DBThread
 	
 	private int addDeliciousEntry(FeedInfo feedInfo, Post entry) throws SQLException
 	{
-
-		//feed_id, permalink, author, title, description, content, unique_content, tag_list, published_at, entry_updated_at, oai_identifier, language, harvested_at, direct_link
+//		feed_id, permalink, author, title, description, content, unique_content, tag_list, 
+//		published_at, entry_updated_at, oai_identifier, language_id, harvested_at, direct_link		
 		
 		stAddEntry.setInt(1, feedInfo.nFeedID);
+
 		stAddEntry.setString(2, entry.getHref());
 
 		// author
 		stAddEntry.setString(3, null);
-		String sDescription = entry.getDescription();
+		stAddEntry.setString(4, null);
 		
 		// description
+		String sDescription = entry.getDescription();
 		stAddEntry.setString(5, sDescription == null ? "" : sDescription);
 
 		// content
@@ -394,11 +398,14 @@ public class Harvester extends DBThread
 		// oai_identifier
 		stAddEntry.setString(11, null);
 		
-		// author
-		stAddEntry.setString(12, null);
+		// language id
+		stAddEntry.setInt(12, nDefaultLanguageID);
+		
+		// harvested_at
+		stAddEntry.setTimestamp(13, currentTime());
 		
 		// direct_link
-		stAddEntry.setString(13, null);
+		stAddEntry.setString(14, null);
 
 		stAddEntry.executeUpdate();
 		return getLastID(stAddEntry);
@@ -719,7 +726,24 @@ public class Harvester extends DBThread
 		if (sUrl.endsWith("index.jhtml")) return sUrl.substring(0,sUrl.length() - 11);
 		return sUrl;
 	}
-	
+	private int getLanguageID(DCModule dcm, SyndEntry entry, FeedInfo feedInfo)
+	{
+		int nLanguageID;
+		String sLanguage = dcm.getLanguage();
+		if (sLanguage == null) sLanguage = getForeignMarkupValue(entry, "language");
+		if (sLanguage == null) {
+			nLanguageID=feedInfo.nDefaultLanguageID;
+		} 
+		else if(htLanguages.containsKey(sLanguage.substring(0,2).toLowerCase()))
+		{
+			nLanguageID=htLanguages.get(sLanguage.substring(0,2).toLowerCase()).intValue();
+		}
+		else
+		{
+			nLanguageID=0;
+		}
+		return nLanguageID;
+	}
 	private void harvestRomeFeed(FeedInfo feedInfo, SyndFeed feed)
 	{
 		try
@@ -771,87 +795,93 @@ public class Harvester extends DBThread
             	DCModule dcm = (DCModule)entry.getModule("http://purl.org/dc/elements/1.1/");
             	DCTermsModule dctm = (DCTermsModule)entry.getModule("http://purl.org/dc/terms/");
             	
-            	// get the permalink for the entry
-            	String sPermalink = entry.getLink();
-            	if (sPermalink == null)
-            	{
-            		// sometimes getLink returns null when it shouldn't
-            		sPermalink = entry.getUri();
-            		if (sPermalink == null)
-            		{
-            			if (dcm != null) sPermalink = dcm.getIdentifier();
-                		if (sPermalink == null) sPermalink = "";
-            		}
-            	}
-            	sPermalink = normalizeUrl(sPermalink);
-            	
-        		// if no published date is provided, we use the current time
-        		Timestamp updatedTime; 
-        		Date updatedDate = entry.getUpdatedDate();
-        		if (updatedDate == null) updatedDate = entry.getPublishedDate();
-        		Timestamp currentTime = currentTime();
-        		if (updatedDate == null && dctm != null) updatedDate = dctm.getModifiedDate();
-        		if (updatedDate == null || updatedDate.after(currentTime)) updatedTime = currentTime;
-        		else updatedTime = new Timestamp(updatedDate.getTime());
-        		
-            	// assume the entry doesn't already exist in the database
-        		EntryInfo existingEntry; 
-
-        		// if we are parsing OAI, check for an OAI identifier
-        		String sOAIIdentifier = null;
-        		if (feedInfo.nServiceID == FeedInfo.SERVICE_OAI)
-        		{
-            		// the parser stores the OAI identifier in foreign markup
-        			sOAIIdentifier = getForeignMarkupValue(entry, "oai_identifier");
-        			String sStatus = getForeignMarkupValue(entry, "status");
-        			
-        			// get the ID of the entry using its oai identifier
-        			existingEntry = getOAIEntryID(sOAIIdentifier); 
-        			
-        			// metadata says the record is deleted
-        			if ("deleted".equals(sStatus))
-        			{
-            			// the entry exists but now has been deleted
-        				if (existingEntry != null)
-        				{
-	        				pstFlagEntryDeleted.setInt(1, existingEntry.nEntryID);
-	        				pstFlagEntryDeleted.executeUpdate();
-	        				nDeletedEntries++;
-        				}
-        				continue;
-        			}
-        		}
-        		// try to get an existing entry based on the feed and the permalink
-        		else existingEntry = getEntry(feedInfo.nFeedID, sPermalink/*, updatedTime*/);
-        		
-        		// get tags for the entry
-        		//String[] asTags = getRSSTags(entry, dcm);
-        		String[] asSubjects=getRSSSubjects(entry, dcm);
-            	// entry with the same permalink doesn't already exist in the database
-        		if (existingEntry == null)
-            	{
-            		if (entryTagsOverlapFilterTags(asSubjects, hsFilterTags))
-            		{
-	            		try
+            	int nLanguageID=getLanguageID(dcm,entry,feedInfo);
+             	if(nLanguageID!=0)
+             	{
+	            	// get the permalink for the entry
+	            	String sPermalink = entry.getLink();
+	            	if (sPermalink == null)
+	            	{
+	            		// sometimes getLink returns null when it shouldn't
+	            		sPermalink = entry.getUri();
+	            		if (sPermalink == null)
 	            		{
-			            	addOrUpdateRSSEntry(stAddEntry, feedInfo, entry, dcm, dctm, sPermalink, asSubjects, updatedTime, sOAIIdentifier, 0);
-		            		nNewEntries++;
+	            			if (dcm != null) sPermalink = dcm.getIdentifier();
+	                		if (sPermalink == null) sPermalink = "";
 	            		}
-		            	catch (Exception e)
-		            	{
-		            		Logger.error("Error adding entry");
-		            		Logger.error(entry.toString());
-		            		Logger.error(e);
-		            	}
-            		}
-            	}
-        		// there is already an entry in the db with the same permalink 
-        		else if (existingEntry.date.before(entry.getPublishedDate()))
-        		{
-        			addOrUpdateRSSEntry(stUpdateEntry, feedInfo, entry, dcm, dctm, sPermalink, asSubjects, updatedTime, sOAIIdentifier, existingEntry.nEntryID);
-        			nUpdatedEntries++;
-        		}
-            }
+	            	}
+	            	sPermalink = normalizeUrl(sPermalink);
+	            	
+	        		// if no published date is provided, we use the current time
+	        		Timestamp updatedTime; 
+	        		Date updatedDate = entry.getUpdatedDate();
+	        		if (updatedDate == null) updatedDate = entry.getPublishedDate();
+	        		Timestamp currentTime = currentTime();
+	        		if (updatedDate == null && dctm != null) updatedDate = dctm.getModifiedDate();
+	        		if (updatedDate == null || updatedDate.after(currentTime)) updatedTime = currentTime;
+	        		else updatedTime = new Timestamp(updatedDate.getTime());
+	        		
+	            	// assume the entry doesn't already exist in the database
+	        		EntryInfo existingEntry; 
+	
+	        		// if we are parsing OAI, check for an OAI identifier
+	        		String sOAIIdentifier = null;
+	        		if (feedInfo.nServiceID == FeedInfo.SERVICE_OAI)
+	        		{
+	            		// the parser stores the OAI identifier in foreign markup
+	        			sOAIIdentifier = getForeignMarkupValue(entry, "oai_identifier");
+	        			String sStatus = getForeignMarkupValue(entry, "status");
+	        			
+	        			// get the ID of the entry using its oai identifier
+	        			existingEntry = getOAIEntryID(sOAIIdentifier); 
+	        			
+	        			// metadata says the record is deleted
+	        			if ("deleted".equals(sStatus))
+	        			{
+	            			// the entry exists but now has been deleted
+	        				if (existingEntry != null)
+	        				{
+		        				pstFlagEntryDeleted.setInt(1, existingEntry.nEntryID);
+		        				pstFlagEntryDeleted.executeUpdate();
+		        				nDeletedEntries++;
+	        				}
+	        				continue;
+	        			}
+	        		}
+	        		// try to get an existing entry based on the feed and the permalink
+	        		else existingEntry = getEntry(feedInfo.nFeedID, sPermalink/*, updatedTime*/);
+	        		
+	        		// get tags for the entry
+	        		//String[] asTags = getRSSTags(entry, dcm);
+	        		String[] asSubjects=getRSSSubjects(entry, dcm);
+	            	// entry with the same permalink doesn't already exist in the database
+	        		
+	        		if (existingEntry == null)
+	            	{
+	            		if (entryTagsOverlapFilterTags(asSubjects, hsFilterTags))
+	            		{
+		            		try
+		            		{
+				            	addOrUpdateRSSEntry(stAddEntry, feedInfo, entry, dcm, dctm, sPermalink, asSubjects, updatedTime, sOAIIdentifier, 0,nLanguageID);
+			            		nNewEntries++;
+		            		}
+			            	catch (Exception e)
+			            	{
+			            		Logger.error("Error adding entry");
+			            		Logger.error(entry.toString());
+			            		Logger.error(e);
+			            	}
+	            		}
+	            	}
+	        		// there is already an entry in the db with the same permalink 
+	        		else if (existingEntry.date.before(entry.getPublishedDate()))
+	        		{
+	        			addOrUpdateRSSEntry(stUpdateEntry, feedInfo, entry, dcm, dctm, sPermalink, asSubjects, updatedTime, sOAIIdentifier, existingEntry.nEntryID,nLanguageID);
+	        			nUpdatedEntries++;
+	        		}
+             	}
+    		}
+            
             // if the last entry doesn't have a published date none of them do 
             if (entry != null && entry.getPublishedDate() == null)
 			{
@@ -1040,7 +1070,7 @@ public class Harvester extends DBThread
 	{
 		return sTag.replaceAll("\"","").trim();
 	}
-	private int addOrUpdateRSSEntry(PreparedStatement st, FeedInfo feedInfo, SyndEntry entry, DCModule dcm, DCTermsModule dctm, String sURI, String[] asSubjects, Timestamp updatedAt, String sOAIIdentifier, int nEntryID) throws SQLException
+	private int addOrUpdateRSSEntry(PreparedStatement st, FeedInfo feedInfo, SyndEntry entry, DCModule dcm, DCTermsModule dctm, String sURI, String[] asSubjects, Timestamp updatedAt, String sOAIIdentifier, int nEntryID, int nLanguageID) throws SQLException
 	{
 		// id, feed_id, permalink, author, title, 
 		// description, content, unique_content, tag_list, published_at, 
@@ -1119,12 +1149,7 @@ public class Harvester extends DBThread
 		st.setString(11, sOAIIdentifier);
 		
 		// language
-		String sLanguage = dcm.getLanguage();
-		if (sLanguage == null) sLanguage = getForeignMarkupValue(entry, "language");
-		if (sLanguage == null) sLanguage = feedInfo.sLanguage;
-		if (sLanguage == null) sLanguage = "en";
-		st.setString(12, sLanguage);
-		
+		st.setInt(12,nLanguageID);
 		// harvested at
 		st.setTimestamp(13, currentTime);
 		
@@ -1494,6 +1519,8 @@ public class Harvester extends DBThread
 		feedInfo.sShortTitle = rs.getString("short_title");
 		
 		feedInfo.sTagFilter = rs.getString("tag_filter");
+		feedInfo.nDefaultLanguageID = rs.getInt("default_language_id");
+		if (feedInfo.nDefaultLanguageID == 0) feedInfo.nDefaultLanguageID = nDefaultLanguageID;
 		return feedInfo;
 	}
 
@@ -1651,6 +1678,8 @@ public class Harvester extends DBThread
 			// prepare statement for retrieving stale feeds
 			cnFeeds = getConnection();
 			stGetStaleFeeds = cnFeeds.createStatement();
+			
+			getLanguageMappings(cnFeeds);	
 	
 			// create a vector for storing the feeds
 			Vector<FeedInfo> vFeeds = new Vector<FeedInfo>();
@@ -1841,12 +1870,28 @@ public class Harvester extends DBThread
 	{
 		return Logger.getMessages();
 	}
-		
+    static public void getLanguageMappings(Connection cn)
+    {
+    	try{
+    	PreparedStatement pstGetSupportLanguages=cn.prepareStatement("SELECT id, locale, is_default FROM languages where muck_raker_supported=1");
+    	ResultSet result=pstGetSupportLanguages.executeQuery();
+	    	while(result.next()){
+	    		Integer nLanguageID = result.getInt(1);
+	    		htLanguages.put(result.getString(2).substring(0,2), nLanguageID);
+	    		if (result.getBoolean(3) == true)
+	    			nDefaultLanguageID = nLanguageID;
+	    	}
+    	}
+    	catch(Exception e){
+    		Logger.error("Read from table language");
+    	}
+    }
 	private static boolean harvestStaleFeeds() 
 	{
 		Logger.status("harvest - begin");
 		boolean bChanges = false;
-		System.setProperty("sun.net.client.defaultReadTimeout","" + nConnectionTimeout*1000); 
+		System.setProperty("sun.net.client.defaultReadTimeout","" + nConnectionTimeout*1000);
+		
 		Vector<FeedInfo> vFeeds = getStaleFeeds();
 		for (Enumeration<FeedInfo> eFeeds = vFeeds.elements(); eFeeds.hasMoreElements();) 
 		{
