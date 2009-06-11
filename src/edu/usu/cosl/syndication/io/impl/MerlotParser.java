@@ -47,7 +47,7 @@ public class MerlotParser extends BaseWireFeedParser {
     }
 
     protected MerlotParser(String type) {
-        super(type);
+        super(type, SQI_MERLOT_NS);
     }
 
     public boolean isMyType(Document document) 

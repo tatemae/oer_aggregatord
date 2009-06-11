@@ -46,7 +46,7 @@ public class OAI20ListSetsParser extends BaseWireFeedParser {
     }
 
     protected OAI20ListSetsParser(String type) {
-        super(type);
+        super(type, OAI_NS);
     }
 
     public boolean isMyType(Document document) 
