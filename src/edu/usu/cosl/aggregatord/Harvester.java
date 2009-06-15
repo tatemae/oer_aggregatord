@@ -119,7 +119,7 @@ public class Harvester extends DBThread
 	
 	private static boolean bImportArchivedFeeds = true;
 	private static boolean bHarvestFromWire = true;
-	private String sArchivePath = "../feed_archive";
+	private static String sArchivePath = "../feed_archive";
 	
 	private static Logger log = new Logger();
 	
@@ -159,7 +159,7 @@ public class Harvester extends DBThread
 	{
 		return log;
 	}
-	public Connection initDBConnection() throws SQLException, ClassNotFoundException
+	public Connection initDBConnection() throws IOException, SQLException, ClassNotFoundException
 	{
 		cnWorker = getConnection();
 		
@@ -1061,14 +1061,14 @@ public class Harvester extends DBThread
 		}
 	}
 
-	private void noChanges(FeedInfo feedInfo) throws SQLException
+	private void noChanges(FeedInfo feedInfo)
 	{
 		try
 		{
 	        initDBConnection();
 			updateFeedInfo(feedInfo);
 			closeDBConnection();
-		} catch (ClassNotFoundException e) {
+		} catch (Exception e) {
 			Logger.error("noChanges-error: ", e);
 		}
 	}
@@ -1751,7 +1751,7 @@ public class Harvester extends DBThread
 			catch (SQLException e2){}
 			return null;
 		}
-		catch (ClassNotFoundException e)
+		catch (Exception e)
 		{
 			Logger.error("getStaleFeeds-2: " + e);
 			return null;
@@ -1817,6 +1817,11 @@ public class Harvester extends DBThread
 //		harvester.extractImagesFromEntry(1, "<p><a href=\"http://www.flickr.com/people/ncho/\">ncho_1</a> posted a photo:</p><p><a href=\"http://www.flickr.com/photos/ncho/231089375/\" title=\"0557666-R2-023-10\"><img src=\"http://farm1.static.flickr.com/67/231089375_45a54cc3ce_m.jpg\" width=\"240\" height=\"98\" alt=\"0557666-R2-023-10\" style=\"border: 1px solid #ddd;\" /></a></p>");
 //	}
 	
+	private static void getDBSettings()
+	{
+		
+	}
+	
 	private static void getConfigOptions()
 	{
 		Properties properties = new Properties();
@@ -1833,6 +1838,12 @@ public class Harvester extends DBThread
 	        if (sValue != null) bImportArchivedFeeds = "true".equals(sValue);
 	        sValue = properties.getProperty("harvest_from_wire");
 	        if (sValue != null) bHarvestFromWire = "true".equals(sValue);
+	        sValue = properties.getProperty("feed_archive_path");
+	        if (sValue != null) sArchivePath = sValue;
+	        
+	        sValue = properties.getProperty("db_yml");
+	        String sDBConfigFile = sValue == null ? sValue : "../../../../../shared/system/config/database.yml";
+	        getDBOptions(sDBConfigFile);
 	        
 	        Logger.getOptions(properties);
 	    }
@@ -1943,7 +1954,6 @@ public class Harvester extends DBThread
 
 	private static boolean harvestStaleFeeds(boolean bTest) 
 	{
-		getConfigOptions();
 		Logger.status("harvest - begin");
 		boolean bChanges = false;
 		System.setProperty("sun.net.client.defaultReadTimeout","" + nConnectionTimeout*1000);
@@ -1965,6 +1975,7 @@ public class Harvester extends DBThread
 	{
 		try
 		{
+			getConfigOptions();
 			Harvester.loadDBDriver();
 			return harvestStaleFeeds(bTest);
 		}
