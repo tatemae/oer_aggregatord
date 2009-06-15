@@ -48,6 +48,9 @@ import com.sun.syndication.feed.module.Module;
 import edu.usu.cosl.syndication.feed.module.DCTermsModule;
 import edu.usu.cosl.syndication.io.impl.MarkupProperty;
 
+import edu.usu.cosl.util.Logger;
+import edu.usu.cosl.util.DBThread;
+
 import com.sun.syndication.io.SyndFeedInput;
 import com.sun.syndication.io.XmlReader;
 
@@ -121,7 +124,7 @@ public class Harvester extends DBThread
 	private static boolean bHarvestFromWire = true;
 	private static String sArchivePath = "../feed_archive";
 	
-	private static Logger log = new Logger();
+	private static Logger log = Logger.getLogger();
 	
 	BlockingQueue<FeedInfo> toDoQueue;
 	BlockingQueue<String> activeJobsQueue;
@@ -1841,9 +1844,7 @@ public class Harvester extends DBThread
 	        sValue = properties.getProperty("feed_archive_path");
 	        if (sValue != null) sArchivePath = sValue;
 	        
-	        sValue = properties.getProperty("db_yml");
-	        String sDBConfigFile = sValue == null ? sValue : "../../../../../shared/system/config/database.yml";
-	        getDBOptions(sDBConfigFile);
+	        getDBOptions(properties);
 	        
 	        Logger.getOptions(properties);
 	    }

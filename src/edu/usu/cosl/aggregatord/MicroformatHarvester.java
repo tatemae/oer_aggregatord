@@ -31,6 +31,8 @@ import java.io.IOException;
 
 import au.id.jericho.lib.html.*;
 
+import edu.usu.cosl.util.DBThread;
+import edu.usu.cosl.util.Logger;
 import edu.usu.cosl.microformats.EventGeneric;
 
 public class MicroformatHarvester extends DBThread 

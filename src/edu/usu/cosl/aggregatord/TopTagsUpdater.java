@@ -5,6 +5,9 @@ import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import edu.usu.cosl.util.DBThread;
+import edu.usu.cosl.util.Logger;
+
 public class TopTagsUpdater extends DBThread 
 {
 	private static final double DEFAULT_POLL_INTERVAL = 5; 

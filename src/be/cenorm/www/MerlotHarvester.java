@@ -4,7 +4,7 @@ import com.sun.syndication.feed.synd.SyndEntry;
 import com.sun.syndication.feed.synd.SyndFeed;
 import com.sun.syndication.io.SyndFeedInput;
 
-import edu.usu.cosl.aggregatord.Logger;
+import edu.usu.cosl.util.Logger;
 import edu.usu.cosl.syndication.io.impl.MarkupProperty;
 
 import java.io.StringReader;

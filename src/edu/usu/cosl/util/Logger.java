@@ -1,4 +1,4 @@
-package edu.usu.cosl.aggregatord;
+package edu.usu.cosl.util;
 
 import java.util.Date;
 import java.util.Properties;
@@ -6,9 +6,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import java.text.SimpleDateFormat;
 
-//import java.io.FileInputStream;
 import java.io.FileWriter;
-//import java.io.IOException;
 import java.io.PrintStream;
 import java.io.OutputStream;
 import java.sql.SQLException;
@@ -93,7 +91,7 @@ public class Logger extends OutputStream
 			messageQueue = new ConcurrentLinkedQueue<String>();
 			if (logger == null)
 			{
-				logger = new Logger();
+				getLogger();
 				fileLogger = logger.new FileLogger();
 				fileLogger.start();
 			}
@@ -131,7 +129,7 @@ public class Logger extends OutputStream
 
 	public static void error(String sMsg, Exception e)
 	{
-		if (e != null) log(EXCEPTION,sMsg + e.toString());
+		if (e != null) log(EXCEPTION,sMsg + "\n" + e.toString());
 		if (e instanceof SQLException) log(EXCEPTION, ((SQLException)e).getNextException().toString());
 	}
 	public static void log(Throwable t)
@@ -151,6 +149,11 @@ public class Logger extends OutputStream
         // log to file
         sValue = properties.getProperty("log_file_prefix");
         if (sValue != null) Logger.setLogFilePrefix(sValue);
+	}
+	public static Logger getLogger()
+	{
+		if (logger == null) logger = new Logger();
+		return logger;
 	}
 	public class FileLogger extends Thread
 	{

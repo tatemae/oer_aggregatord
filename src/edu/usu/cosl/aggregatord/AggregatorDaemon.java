@@ -8,6 +8,7 @@ import java.io.IOException;
 
 import java.util.concurrent.ArrayBlockingQueue;
 
+import edu.usu.cosl.util.Logger;
 import org.apache.commons.daemon.Daemon;
 import org.apache.commons.daemon.DaemonContext;
 
@@ -47,7 +48,7 @@ public class AggregatorDaemon implements Daemon
 	
 	public static void main(String[] args) 
 	{
-		Harvester.getLogger();
+		Logger.getLogger();
 		AggregatorDaemon daemon = new AggregatorDaemon();
 		daemon.init(null);
 		daemon.start();

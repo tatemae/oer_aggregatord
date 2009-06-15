@@ -14,6 +14,8 @@ import java.util.ListIterator;
 
 import com.sun.syndication.io.impl.DateParser;
 
+import edu.usu.cosl.util.Logger;
+import edu.usu.cosl.util.DBThread;
 import edu.usu.cosl.microformats.EventConcert;
 import edu.usu.cosl.microformats.EventConference;
 import edu.usu.cosl.microformats.EventGeneric;
