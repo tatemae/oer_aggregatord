@@ -32,7 +32,7 @@ public class DBThread extends Thread {
 	private static String sJDBCConnection = "jdbc:apache:commons:dbcp:" + sPool;
 	
 	private static boolean bDriverLoaded = false;
-	private static String sRailsEnv = "production";
+	private static String sRailsEnv = "development";
 
 	public static void loadDBDriver() throws ClassNotFoundException
 	{
@@ -61,11 +61,15 @@ public class DBThread extends Thread {
 	}
 	public static void getDBOptions(Properties properties)
 	{
+        Logger.getOptions(properties);
+        
         String sValue = properties.getProperty("db_yml");
-        String sDBConfigFile = (sValue == null) ? "../../../../../shared/system/config/database.yml" : sValue;
+        String sDBConfigFile = (sValue == null) ? "config/database.yml" : sValue;
+        sDBConfigFile = System.getProperty("RAILS_DB_CONFIG", sDBConfigFile);
 
         sValue = properties.getProperty("rails_env");
         if (sValue != null) sRailsEnv = sValue;
+        sRailsEnv = System.getProperty("RAILS_ENV", sRailsEnv);
         
 		try
 		{

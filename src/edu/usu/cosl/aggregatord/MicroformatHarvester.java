@@ -489,7 +489,7 @@ public class MicroformatHarvester extends DBThread
 		try
 		{
 			Logger.setLogToConsole(true);
-			Logger.setLogLevel(10);
+			Logger.setConsoleLogLevel(10);
 			MicroformatHarvester mfHarvester = new MicroformatHarvester();
 			Connection cn = getConnection();
 			for (int nPage = 0; nPage < asTestPages.length; nPage++)

@@ -120,11 +120,7 @@ public class Harvester extends DBThread
 	public static final int DEFAULT_CONNECTION_TIMEOUT = 180; // seconds
 	public static int nConnectionTimeout = DEFAULT_CONNECTION_TIMEOUT;
 	
-	private static boolean bImportArchivedFeeds = true;
-	private static boolean bHarvestFromWire = true;
 	private static String sArchivePath = "../feed_archive";
-	
-	private static Logger log = Logger.getLogger();
 	
 	BlockingQueue<FeedInfo> toDoQueue;
 	BlockingQueue<String> activeJobsQueue;
@@ -137,6 +133,9 @@ public class Harvester extends DBThread
 	private SimpleDateFormat sdf;
 	
 	private boolean bTalkToDB = true;
+	private static boolean bDiscoverOAISets = true; 
+	private static boolean bImportArchivedFeeds = false;
+	private static boolean bHarvestFromWire = true;
 	
 	class EntryInfo
 	{
@@ -1699,8 +1698,6 @@ public class Harvester extends DBThread
 		}
 	}
 	
-	private static boolean bDiscoverOAISets = true; 
-
 	public static Vector<FeedInfo> getStaleFeeds()
 	{
 		ResultSet rsStaleFeeds = null;
@@ -1812,18 +1809,6 @@ public class Harvester extends DBThread
 		if (bTalkToDB) harvester.initDBConnection();
 		harvester.harvestFeed(fi);
 	}
-//	private static void testExtractImages() throws SQLException
-//	{
-//		Harvester harvester = new Harvester(null, null);
-//		Logger.setDBLogLevel(10);
-//		Logger.setLogToConsole(true);
-//		harvester.extractImagesFromEntry(1, "<p><a href=\"http://www.flickr.com/people/ncho/\">ncho_1</a> posted a photo:</p><p><a href=\"http://www.flickr.com/photos/ncho/231089375/\" title=\"0557666-R2-023-10\"><img src=\"http://farm1.static.flickr.com/67/231089375_45a54cc3ce_m.jpg\" width=\"240\" height=\"98\" alt=\"0557666-R2-023-10\" style=\"border: 1px solid #ddd;\" /></a></p>");
-//	}
-	
-	private static void getDBSettings()
-	{
-		
-	}
 	
 	private static void getConfigOptions()
 	{
@@ -1843,23 +1828,15 @@ public class Harvester extends DBThread
 	        if (sValue != null) bHarvestFromWire = "true".equals(sValue);
 	        sValue = properties.getProperty("feed_archive_path");
 	        if (sValue != null) sArchivePath = sValue;
+	        sArchivePath = System.getProperty("FEED_ARCHIVE_PATH", sArchivePath);
 	        
 	        getDBOptions(properties);
-	        
-	        Logger.getOptions(properties);
 	    }
 	    catch (IOException e) 
 	    {
 	    	System.out.println("error reading aggregatord.properties file");
 	    }
 	}
-//	private void testCases()
-//	{
-//		// rss
-//		// oai
-//		// flickr
-//		// delicious
-//	}
 	
 	private static String readFile(String sUrl) throws IOException
 	{

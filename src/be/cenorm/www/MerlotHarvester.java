@@ -123,7 +123,7 @@ public class MerlotHarvester
 	public static void main(String[] args) 
 	{
 		Logger.setLogToConsole(true);
-		Logger.setLogLevel(10);
+		Logger.setConsoleLogLevel(10);
 		try
 		{
 			MerlotHarvester harvester = new MerlotHarvester();
