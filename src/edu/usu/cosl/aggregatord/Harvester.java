@@ -134,7 +134,7 @@ public class Harvester extends DBThread
 	
 	private boolean bTalkToDB = true;
 	private static boolean bDiscoverOAISets = true; 
-	private static boolean bImportArchivedFeeds = false;
+	private static boolean bImportArchivedFeeds = true;
 	private static boolean bHarvestFromWire = true;
 	
 	class EntryInfo
