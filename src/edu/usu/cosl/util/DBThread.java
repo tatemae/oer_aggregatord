@@ -24,9 +24,9 @@ public class DBThread extends Thread {
 	private static String sUser = "root";
 	private static String sPassword = "";
 
-	private static String sDatabase = "muck";
+	private static String sDatabase;
 	private static String sDBConnectionPrefix = "jdbc:mysql://localhost/";
-	private static String sDBConnection = sDBConnectionPrefix + sDatabase;
+	private static String sDBConnection;
 
 	private static String sPool = "aggregator";
 	private static String sJDBCConnection = "jdbc:apache:commons:dbcp:" + sPool;
@@ -84,8 +84,10 @@ public class DBThread extends Thread {
 					while(sLine != null && sLine.startsWith(" "))
 					{
 						sLine = sLine.trim();
-						if (sLine.startsWith("database:")) 
+						if (sLine.startsWith("database:")) {
 							sDatabase = sLine.substring(9).trim();
+							sDBConnection = sDBConnectionPrefix + sDatabase;
+						}
 						else if (sLine.startsWith("username:")) 
 							sUser = sLine.substring(10).trim();
 						else if (sLine.startsWith("password:")) 
@@ -95,6 +97,9 @@ public class DBThread extends Thread {
 					break;
 				}
 				sLine = reader.readLine();
+			}
+			if (sDatabase == null) {
+				throw new Exception("A database was not specified");
 			}
 		} 
 		catch (Exception e)
