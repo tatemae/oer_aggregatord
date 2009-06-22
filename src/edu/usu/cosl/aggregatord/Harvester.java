@@ -1830,11 +1830,11 @@ public class Harvester extends DBThread
 	        if (sValue != null) sArchivePath = sValue;
 	        sArchivePath = System.getProperty("FEED_ARCHIVE_PATH", sArchivePath);
 	        
-	        getDBOptions(properties);
+	        getLoggerAndDBOptions(properties);
 	    }
-	    catch (IOException e) 
+	    catch (Exception e) 
 	    {
-	    	System.out.println("error reading aggregatord.properties file");
+	    	Logger.error(e);
 	    }
 	}
 	

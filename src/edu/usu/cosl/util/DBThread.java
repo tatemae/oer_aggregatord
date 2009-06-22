@@ -7,6 +7,7 @@ import java.sql.Timestamp;
 import java.util.Properties;
 import java.util.Date;
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.FileReader;
 
 import org.apache.commons.dbcp.ConnectionFactory; 
@@ -59,7 +60,25 @@ public class DBThread extends Thread {
 	{
 		return new Timestamp(new Date().getTime());
 	}
-	public static void getDBOptions(Properties properties)
+	public static Properties loadPropertyFile(String sFile) throws Exception
+	{
+	    try 
+	    {
+	    	Properties properties = new Properties();
+	    	FileInputStream in = new FileInputStream(sFile);
+	        properties.load(in);
+	        in.close();
+	        return properties;
+	    } catch (Exception e) {
+	    	Logger.error("Unable to load properties file: " + sFile, e);
+	    	throw e;
+	    }
+	}
+	public static void getLoggerAndDBOptions(String sFile) throws Exception
+	{
+		getLoggerAndDBOptions(loadPropertyFile(sFile));
+	}
+	public static void getLoggerAndDBOptions(Properties properties) throws Exception
 	{
         Logger.getOptions(properties);
         
@@ -105,6 +124,7 @@ public class DBThread extends Thread {
 		catch (Exception e)
 		{
 			Logger.error("Unable to load database configuration file", e);
+			throw e;
 		}
 	}
 }

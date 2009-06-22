@@ -32,7 +32,6 @@ public class AggregatorDaemon implements Daemon
 	private static ArrayBlockingQueue<FeedInfo> toDoQueue;
 	private static ArrayBlockingQueue<String> activeJobsQueue;
 	private static Harvester[] workerThreads;
-	private static TopTagsUpdater statsUpdater;
 
 	// number of threads to use (we reserve one for the main process) 
 	private static final int DEFAULT_THREADS = 2;
@@ -155,10 +154,6 @@ public class AggregatorDaemon implements Daemon
 		
 		// create a thread pool for harvesting feeds
 		startWorkerThreads(nWorkerThreads);
-
-		// create a thread for updating statistics 
-		statsUpdater = new TopTagsUpdater();
-		statsUpdater.start();
 		
 	}
 	public void start()

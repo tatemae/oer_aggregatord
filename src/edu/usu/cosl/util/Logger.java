@@ -198,6 +198,8 @@ public class Logger extends OutputStream
 	
 	public static void getOptions(Properties properties)
 	{
+		getLogger();
+		
         // log level
         String sValue = properties.getProperty("debug_level");
         int nDebugLevel = CRITICAL;
