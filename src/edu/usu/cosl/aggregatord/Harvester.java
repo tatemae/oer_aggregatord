@@ -19,6 +19,8 @@ import java.util.Vector;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Enumeration;
+import java.util.Arrays;
+import java.util.Collections;
 
 import java.text.SimpleDateFormat;
 
@@ -622,6 +624,11 @@ public class Harvester extends DBThread
 		return sArchivePath + File.separatorChar + feedInfo.sURI.replaceAll("\\W", "-");
 	}
 	
+	private String getFeedArchiveName(FeedInfo feedInfo)
+	{
+		return getFeedArchiveDir(feedInfo) + File.separatorChar + feedInfo.lLastRequested + ".xml";
+	}
+	
 	private SyndFeed getSyndFeed(FeedInfo feedInfo) throws SQLException
 	{
 		// first time through
@@ -661,7 +668,7 @@ public class Harvester extends DBThread
 			// build an archive file path
 			File fArchiveDir = new File(getFeedArchiveDir(feedInfo));
 			if (!fArchiveDir.exists()) fArchiveDir.mkdirs();
-			File fArchive = new File(fArchiveDir.getPath() + File.separatorChar + feedInfo.lLastRequested + ".xml");
+			File fArchive = new File(getFeedArchiveName(feedInfo));
 			
 			// save the content to disk
 			if (saveUrlToFile(fArchive, uriConn))
@@ -730,24 +737,30 @@ public class Harvester extends DBThread
 	
 	private void importArchivedFeedData(FeedInfo feedInfo) throws Exception
 	{
+		// loop through the files in the feed's archive dir
 		File fArchiveDir = new File(getFeedArchiveDir(feedInfo));
 		if (!fArchiveDir.exists()) return;
-		File[] afArchives = fArchiveDir.listFiles();
-		if (afArchives.length > 0) {
+		List<File> files = Arrays.asList(fArchiveDir.listFiles());
+		Collections.sort(files, Collections.reverseOrder());
+		if (files.size() > 0) 
+		{
 			Logger.info("importArchivedFeedData");
-			for (int nFile = 0; nFile < afArchives.length; nFile++)
+			for (int nFile = 0; nFile < files.size(); nFile++)
 			{
-				File fArchive = afArchives[nFile];
+				// get the time stamp from the file name
+				File fArchive = files.get(nFile);
 				String sFile = fArchive.getName();
 				String sDate = sFile.substring(0,sFile.length() - 4);
 				Long lDate = Long.parseLong(sDate);
+				
+				// if our last harvested date is before when the file was harvested, harvest it now 
 				if (lDate > feedInfo.lLastHarvested)
 				{
 					try{
 						feedInfo.lLastHarvested = lDate;
 						harvestRomeFeed(feedInfo, new SyndFeedInput().build(new XmlReader(fArchive)));
 					} catch (Exception e) {
-						Logger.error("importArchivedFeeds-error: ", e);
+						Logger.error("importArchivedFeeds - error: ", e);
 					}
 				}
 			}
@@ -868,8 +881,14 @@ public class Harvester extends DBThread
     				if (!hsFilterTags.contains(sTag)) hsFilterTags.add(sTag);
     			}
             }
-            // loop through the entries
+            // get the returned entries
             List lEntries = feed.getEntries();
+
+            // delete the archive file if no new entries were brought in
+         	if (lEntries.size() == 0)
+         		new File(getFeedArchiveName(feedInfo)).delete();
+
+            // loop through the entries
         	SyndEntry entry = null;
             for (ListIterator entries = lEntries.listIterator(); entries.hasNext() && nNewEntries < nMaxEntries;)
             {
@@ -1636,7 +1655,8 @@ public class Harvester extends DBThread
 			Connection cn = getConnection();
 			Statement stEndpoints = cn.createStatement();
 			PreparedStatement pstFeeds = cn.prepareStatement("SELECT title FROM feeds WHERE uri = ?");
-			PreparedStatement pstAddFeed = cn.prepareStatement("INSERT INTO feeds (uri, title, short_title, harvested_from_display_uri, harvested_from_title, harvested_from_short_title, harvest_interval, priority, service_id) VALUES (?,?,?,?,?,?,?,1,13)");
+			PreparedStatement pstAddFeed = cn.prepareStatement("INSERT INTO feeds (uri, title, short_title, harvested_from_display_uri, harvested_from_title, harvested_from_short_title, harvest_interval, priority, service_id) VALUES (?,?,?,?,?,?,?,1,?)");
+			pstAddFeed.setInt(8, FeedInfo.SERVICE_OAI);
 			ResultSet rsEndpoints = stEndpoints.executeQuery("SELECT * FROM oai_endpoints");
 			while (rsEndpoints.next())
 			{
