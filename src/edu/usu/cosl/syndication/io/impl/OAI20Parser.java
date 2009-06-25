@@ -311,10 +311,27 @@ public class OAI20Parser extends BaseWireFeedParser {
                 if (eSpec != null)
                 {
                 	String sSpec = eSpec.getText();
-                	if (sSpec != null && sSpec.startsWith("language:"))
-                	{
-	                	String sLanguage = sSpec.substring(9);
-	                	lMarkup.add(new MarkupProperty("language", sLanguage));
+                	if (sSpec != null) {
+                		if (sSpec.startsWith("language:"))
+                    	{
+    	                	String sLanguage = sSpec.substring(9);
+    	                	lMarkup.add(new MarkupProperty("language", sLanguage));
+                    	}
+                		else if (sSpec.startsWith("content_type:"))
+                    	{
+    	                	String sContentType = sSpec.substring(13);
+    	                	lMarkup.add(new MarkupProperty("content_type", sContentType));
+                    	}
+                		else if (sSpec.startsWith("material_types:"))
+                    	{
+    	                	String sMaterialType = sSpec.substring(15);
+    	                	lMarkup.add(new MarkupProperty("material_types", sMaterialType));
+                    	}
+                		else if (sSpec.startsWith("languages:"))
+                    	{
+    	                	String sLanguages = sSpec.substring(10);
+    	                	lMarkup.add(new MarkupProperty("languages", sLanguages));
+                    	}
                 	}
                 }
             }

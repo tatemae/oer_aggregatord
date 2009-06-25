@@ -34,6 +34,7 @@ public class FeedInfo
 	public int nTagsToCache = 0;
 	public String sTagFilter;
 	public int nDefaultLanguageID;
+	public String sDefaultGrainSize;
 	
 	public String sFeedURI;
 	public String sResumptionToken;

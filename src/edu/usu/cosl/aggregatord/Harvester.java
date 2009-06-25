@@ -12,6 +12,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Calendar;
 import java.util.Iterator;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Properties;
@@ -76,7 +77,7 @@ public class Harvester extends DBThread
 	private static Statement stGetStaleFeeds;
 	private static final String QUERY_FEEDS =
 		"SELECT feeds.id, feeds.service_id, feeds.title, feeds.uri, feeds.priority, feeds.login, feeds.password, " +
-		"services.api_uri, feeds.last_harvested_at, feeds.failed_requests, feeds.harvest_interval, feeds.display_uri, feeds.short_title, tag_filter, default_language_id " +
+		"services.api_uri, feeds.last_harvested_at, feeds.failed_requests, feeds.harvest_interval, feeds.display_uri, feeds.short_title, tag_filter, default_language_id, default_grain_size " +
 		"FROM feeds LEFT OUTER JOIN services ON (feeds.service_id = services.id) ";
 	private static final String STALE_FEEDS_CONDITION =
 		"WHERE failed_requests < 10 AND feeds.id != 0 AND feeds.status >= 0 ";
@@ -174,7 +175,7 @@ public class Harvester extends DBThread
 		pstGetServiceURI = cnWorker.prepareStatement("SELECT api_uri FROM services WHERE id = ?");
 
 		pstAddFeed = cnWorker.prepareStatement("INSERT INTO feeds (id, uri, title, harvest_interval, last_harvested_at, created_at, updated_at, service_id) VALUES (?,?,?,?,?,?,?,?)");
-		pstAddEntry = cnWorker.prepareStatement("INSERT INTO entries (feed_id, permalink, author, title, description, content, unique_content, published_at, entry_updated_at, oai_identifier, language_id, harvested_at, direct_link) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
+		pstAddEntry = cnWorker.prepareStatement("INSERT INTO entries (feed_id, permalink, author, title, description, content, unique_content, published_at, entry_updated_at, oai_identifier, language_id, harvested_at, direct_link, grain_size) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 		pstUpdateEntry = cnWorker.prepareStatement("UPDATE entries SET feed_id = ?, permalink = ?, author = ?, title = ?, description = ?, content = ?, unique_content = ?, published_at = ?, entry_updated_at = ?, oai_identifier = ?, language_id = ?, harvested_at = ?, direct_link = ? WHERE id = ?");
 		pstAddEntryImage = cnWorker.prepareStatement("INSERT INTO entry_images (entry_id, uri, link, alt, title, width, height) VALUES (?,?,?,?,?,?,?)");
 		pstGetSubjectID = cnWorker.prepareStatement("SELECT id FROM subjects WHERE name = ?");
@@ -290,6 +291,29 @@ public class Harvester extends DBThread
         return bChangesMade;
 	}
 	
+	private boolean foreignMarkupIncludes(SyndEntry entry, String sMarkupName, String sValue)
+	{
+		// the parser stores the OAI identifier in foreign markup
+		List lMarkup = (List)entry.getForeignMarkup();
+		if (lMarkup != null)
+		{
+			for (int nProperty = 0; nProperty < lMarkup.size(); nProperty++)
+			{
+				Object item = lMarkup.get(nProperty);
+				if (item instanceof MarkupProperty)
+				{
+					MarkupProperty mp = (MarkupProperty)item;
+					String sName = mp.getName();
+					if (sName.equals(sMarkupName) && sValue.equals((String)mp.getValue()))
+					{
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+	
 	private String getForeignMarkupValue(SyndEntry entry, String sMarkupName)
 	{
 		String sValue = null;
@@ -316,6 +340,31 @@ public class Harvester extends DBThread
 		return sValue == null || sValue.length() == 0 ? null : sValue;
 	}
 	
+	private List<String> getForeignMarkupValues(SyndEntry entry, String sMarkupName)
+	{
+		ArrayList<String> lValues = new ArrayList<String>();
+		
+		// the parser stores the OAI identifier in foreign markup
+		List lMarkup = (List)entry.getForeignMarkup();
+		if (lMarkup != null)
+		{
+			for (int nProperty = 0; nProperty < lMarkup.size(); nProperty++)
+			{
+				Object item = lMarkup.get(nProperty);
+				if (item instanceof MarkupProperty)
+				{
+					MarkupProperty mp = (MarkupProperty)item;
+					String sName = mp.getName();
+					if (sName.equals(sMarkupName))
+					{
+						lValues.add((String)mp.getValue());
+					}
+				}
+			}
+		}
+		return lValues;
+	}
+	
 	private void harvestMerlotFeed(FeedInfo feedInfo)
 	{
 		try
@@ -332,7 +381,7 @@ public class Harvester extends DBThread
             {
             	// get info about the entry
             	SyndEntry entry = merlotHarvester.next();
-            	int nLanguageID=getLanguageID(null,entry,feedInfo);
+            	int nLanguageID = getLanguageID(null,entry,feedInfo);
             	// if the entry doesn't already exist in the database
             	if (getEntry(feedInfo.nFeedID, entry.getUri()) == null)
             	{
@@ -406,6 +455,9 @@ public class Harvester extends DBThread
 		
 		// direct_link
 		pstAddEntry.setString(13, null);
+		
+		// grain_size
+		pstAddEntry.setString(14, feedInfo.sDefaultGrainSize);
 
 		pstAddEntry.executeUpdate();
 		return getLastID(pstAddEntry);
@@ -738,17 +790,18 @@ public class Harvester extends DBThread
 	private void importArchivedFeedData(FeedInfo feedInfo) throws Exception
 	{
 		// loop through the files in the feed's archive dir
-		File fArchiveDir = new File(getFeedArchiveDir(feedInfo));
+		String sFeedArchiveDir = getFeedArchiveDir(feedInfo);
+		File fArchiveDir = new File(sFeedArchiveDir);
 		if (!fArchiveDir.exists()) return;
 		List<File> files = Arrays.asList(fArchiveDir.listFiles());
 		Collections.sort(files, Collections.reverseOrder());
 		if (files.size() > 0) 
 		{
-			Logger.info("importArchivedFeedData");
 			for (int nFile = 0; nFile < files.size(); nFile++)
 			{
 				// get the time stamp from the file name
 				File fArchive = files.get(nFile);
+				Logger.info("Importing: ..." + (sFeedArchiveDir.length() > 20 ? sFeedArchiveDir.substring(sFeedArchiveDir.length() - 20) : sFeedArchiveDir) + "/" + fArchive.getName());
 				String sFile = fArchive.getName();
 				String sDate = sFile.substring(0,sFile.length() - 4);
 				Long lDate = Long.parseLong(sDate);
@@ -826,21 +879,27 @@ public class Harvester extends DBThread
 	}
 	private int getLanguageID(DCModule dcm, SyndEntry entry, FeedInfo feedInfo)
 	{
-		int nLanguageID;
 		String sLanguage = dcm.getLanguage();
 		if (sLanguage == null) sLanguage = getForeignMarkupValue(entry, "language");
-		if (sLanguage == null) {
-			nLanguageID=feedInfo.nDefaultLanguageID;
+		if (sLanguage == null) 
+		{
+			List<String> lLanguages = getForeignMarkupValues(entry, "languages");
+			for (int nLanguage = 0; nLanguage < lLanguages.size(); nLanguage++)
+			{
+				sLanguage = (String)lLanguages.get(nLanguage);
+				if (htLanguages.containsKey(sLanguage.substring(0,2).toLowerCase()))
+				{
+					return htLanguages.get(sLanguage.substring(0,2).toLowerCase()).intValue();
+				}
+			}
+			if (lLanguages.size() > 0) return 0;
+			else return feedInfo.nDefaultLanguageID;
 		} 
-		else if(htLanguages.containsKey(sLanguage.substring(0,2).toLowerCase()))
+		else if (htLanguages.containsKey(sLanguage.substring(0,2).toLowerCase()))
 		{
-			nLanguageID=htLanguages.get(sLanguage.substring(0,2).toLowerCase()).intValue();
+			return htLanguages.get(sLanguage.substring(0,2).toLowerCase()).intValue();
 		}
-		else
-		{
-			nLanguageID=0;
-		}
-		return nLanguageID;
+		return 0;
 	}
 	private void harvestRomeFeed(FeedInfo feedInfo, SyndFeed feed)
 	{
@@ -1166,10 +1225,11 @@ public class Harvester extends DBThread
 		if (sSubject.length() > 0)
 		{
 			String[] asSubjects = normalizeSubjectList(sSubject);
-			if (asSubjects.length > 1) Logger.info("Converted: " + sSubject + " => " + arrayToList(asSubjects));
+//			if (asSubjects.length > 1) Logger.info("Converted: " + sSubject + " => " + arrayToList(asSubjects));
 			for (int nSubject = 0; nSubject < asSubjects.length; nSubject++)
 			{
 				String sNormalizedSubject = asSubjects[nSubject].trim();
+				if (sNormalizedSubject.startsWith("and ")) sNormalizedSubject = sNormalizedSubject.substring(4);
 				if (sNormalizedSubject.length() > 0 && !hsEntrySubjects.contains(sNormalizedSubject)) {
 					pstAddEntrySubject.setInt(1, getSubjectID(sNormalizedSubject));
 					pstAddEntrySubject.setInt(2, nEntryID);
@@ -1215,7 +1275,7 @@ public class Harvester extends DBThread
 		return getLastID(pstAddSubject);
 	}
 	
-	private int addOrUpdateRSSEntry(PreparedStatement st, FeedInfo feedInfo, SyndEntry entry, DCModule dcm, DCTermsModule dctm, String sURI, String[] asSubjects, Timestamp updatedAt, String sOAIIdentifier, int nEntryID, int nLanguageID) throws SQLException
+	private int addOrUpdateRSSEntry(PreparedStatement pst, FeedInfo feedInfo, SyndEntry entry, DCModule dcm, DCTermsModule dctm, String sURI, String[] asSubjects, Timestamp updatedAt, String sOAIIdentifier, int nEntryID, int nLanguageID) throws SQLException
 	{
 		// id, feed_id, permalink, author, title, 
 		// description, content, unique_content, published_at, 
@@ -1226,7 +1286,7 @@ public class Harvester extends DBThread
 		if (sDescription == null && dcm != null) sDescription = dcm.getDescription();
 		if (sDescription == null) sDescription = "";
 
-		st.setInt(1, feedInfo.nFeedID);
+		pst.setInt(1, feedInfo.nFeedID);
 
 		// permalink
 		if (sURI == null)
@@ -1234,13 +1294,13 @@ public class Harvester extends DBThread
 			Logger.info("Null permalink in: " + feedInfo.sTitle/* + "(" + feedInfo.sURI + ")"*/);
 			return 0;
 		}
-		st.setString(2, sURI);
+		pst.setString(2, sURI);
 		
 		// author
 		String sAuthor = entry.getAuthor();
 		if (sAuthor == null) sAuthor = dcm.getCreator();
 		if (sAuthor == null) sAuthor = dctm.getCreator();
-		st.setString(3, sAuthor);
+		pst.setString(3, sAuthor);
 
 		// title
 		String sTitle = entry.getTitle();
@@ -1250,10 +1310,10 @@ public class Harvester extends DBThread
 			if (sTitle.indexOf("(MIT)") != -1) sTitle = fixMITEntryTitle(sTitle);
 			else if (feedInfo.sShortTitle != null) sTitle.replace(feedInfo.sShortTitle + " ", "");
 		}
-		st.setString(4, sTitle == null ? "" : sTitle);
+		pst.setString(4, sTitle == null ? "" : sTitle);
 		
 		// description
-		st.setString(5, sDescription);
+		pst.setString(5, sDescription);
 		
 		// content
 		String sContent = null;
@@ -1265,10 +1325,10 @@ public class Harvester extends DBThread
 		}
 		// only store the content if it is different than the description
 		boolean bUniqueContent = (sContent != null && !sContent.equals(sDescription));
-		st.setString(6, bUniqueContent ? sContent : "");
+		pst.setString(6, bUniqueContent ? sContent : "");
 
 		// unique_content
-		st.setBoolean(7, bUniqueContent);
+		pst.setBoolean(7, bUniqueContent);
 		
 		// published_at
 		Timestamp currentTime = currentTime();
@@ -1277,29 +1337,37 @@ public class Harvester extends DBThread
 		if (publishedDate == null && dctm != null) publishedDate = (Date)dctm.getCreatedDate();
 		if (publishedDate == null || publishedDate.after(currentTime)) publishedTime = currentTime;
 		else publishedTime = new Timestamp(publishedDate.getTime());
-		st.setTimestamp(8, publishedTime);
+		pst.setTimestamp(8, publishedTime);
 
 		// updated_at
-		st.setTimestamp(9, updatedAt);
+		pst.setTimestamp(9, updatedAt);
 
 		// oai_identifier
-		st.setString(10, sOAIIdentifier);
+		pst.setString(10, sOAIIdentifier);
 		
 		// language
-		st.setInt(11,nLanguageID);
+		pst.setInt(11,nLanguageID);
 		// harvested at
-		st.setTimestamp(12, currentTime);
+		pst.setTimestamp(12, currentTime);
 		
 		// direct link
 		String sDirectLink = getForeignMarkupValue(entry, "direct_link");
 		sDirectLink = normalizeUrl(sDirectLink);
-		st.setString(13, sDirectLink);
+		pst.setString(13, sDirectLink);
+		
+		// grain size
+		String sGrainSize = null;
+		if (foreignMarkupIncludes(entry, "material_types", "syllabi")) sGrainSize = "course";
+		if (sGrainSize == null) sGrainSize = feedInfo.sDefaultGrainSize;
 		
 		// if we are updating, we specify the id last
-		if (st == pstUpdateEntry) st.setInt(14, nEntryID);
+		if (pst == pstUpdateEntry) pst.setInt(14, nEntryID);
 		
-		st.executeUpdate();
-		nEntryID = getLastID(st);
+		// otherwise we specify the content type (we never updated that)
+		else pst.setString(14, sGrainSize);
+		
+		pst.executeUpdate();
+		nEntryID = getLastID(pst);
 		
     	// add the subjects for the entry
     	if (nEntryID != 0 && asSubjects != null) 
@@ -1571,6 +1639,7 @@ public class Harvester extends DBThread
 		feedInfo.sTagFilter = rs.getString("tag_filter");
 		feedInfo.nDefaultLanguageID = rs.getInt("default_language_id");
 		if (feedInfo.nDefaultLanguageID == 0) feedInfo.nDefaultLanguageID = nDefaultLanguageID;
+		feedInfo.sDefaultGrainSize = rs.getString("default_grain_size");
 		return feedInfo;
 	}
 
@@ -1987,6 +2056,7 @@ public class Harvester extends DBThread
 	public static void main(String[] args) 
 	{
 		harvest(false);
+		System.exit(0);
 	}
 }
 

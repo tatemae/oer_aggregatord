@@ -22,7 +22,7 @@ public class Logger extends OutputStream
 	public static final int ALL			= 10;
 
 	private static boolean bLogToConsole = true;
-	private static int nConsoleLogLevel = CRITICAL;
+	private static int nConsoleLogLevel = EXCEPTION;
 
 	private static boolean bLogToString = false;
 	private static StringBuffer sMsgs = new StringBuffer();
@@ -202,7 +202,7 @@ public class Logger extends OutputStream
 		
         // log level
         String sValue = properties.getProperty("debug_level");
-        int nDebugLevel = CRITICAL;
+        int nDebugLevel = EXCEPTION;
         if (sValue != null) nDebugLevel = Integer.parseInt(sValue);
         if (System.getProperty("DEBUG") != null) nDebugLevel = ALL; 
         if (System.getProperty("WARN") != null) nDebugLevel = WARNING; 
