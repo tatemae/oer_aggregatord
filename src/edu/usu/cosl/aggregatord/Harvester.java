@@ -137,7 +137,7 @@ public class Harvester extends DBThread
 	
 	private boolean bTalkToDB = true;
 	private static boolean bDiscoverOAISets = true; 
-	private static boolean bImportArchivedFeeds = true;
+	private static boolean bImportArchivedFeeds = false;
 	private static boolean bHarvestFromWire = true;
 	
 	class EntryInfo
@@ -1918,6 +1918,7 @@ public class Harvester extends DBThread
 	        if (sValue != null) bDiscoverOAISets = "true".equals(sValue);
 	        sValue = properties.getProperty("request_timeout");
 	        try {if (sValue != null) nConnectionTimeout = Integer.parseInt(sValue);}catch(Exception nfe){Logger.error("Bad request_timeout value",nfe);}
+	        if ("development".equals(sRailsEnv)) bImportArchivedFeeds = true;
 	        sValue = properties.getProperty("import_archived_feed_data");
 	        if (sValue != null) bImportArchivedFeeds = "true".equals(sValue);
 	        sValue = properties.getProperty("harvest_from_wire");
@@ -2068,7 +2069,7 @@ public class Harvester extends DBThread
 	public static void main(String[] args) 
 	{
 		harvest();
-		System.exit(0);
+		Logger.stopLogging();
 	}
 }
 

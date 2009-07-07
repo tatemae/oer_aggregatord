@@ -33,7 +33,7 @@ public class DBThread extends Thread {
 	private static String sJDBCConnection = "jdbc:apache:commons:dbcp:" + sPool;
 	
 	private static boolean bDriverLoaded = false;
-	private static String sRailsEnv = "development";
+	protected static String sRailsEnv = "development";
 
 	public static void loadDBDriver() throws ClassNotFoundException
 	{
