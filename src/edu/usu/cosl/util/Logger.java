@@ -87,6 +87,11 @@ public class Logger extends OutputStream
 		bLogToString = true;
 	}
 	
+	public static void stopLogging()
+	{
+		setLogFilePrefix(null);
+	}
+	
 	public static void setLogFilePrefix(String sPrefix)
 	{
 		if (sPrefix != null)
@@ -157,14 +162,14 @@ public class Logger extends OutputStream
 			if (sbMessage.length() > 0)
 				logMessageToFile(sbMessage.toString());
 		}
+		
 		public void run()
 		{
 			try 
 			{
 				while(bRun)
 				{
-					String sMessage = messageQueue.poll();
-					if (sMessage != null) {
+					if (!messageQueue.isEmpty()) {
 						flushMessages();
 					}
 					else {
@@ -177,11 +182,14 @@ public class Logger extends OutputStream
 				System.out.println(e);
 			}
 		}
+		
+		
 		public void logMessageToFile(String sMessage)
 		{
 			try
 			{
 				FileWriter writer = new FileWriter(sLogFilePrefix + "_" + dateFormatter.format(new Date()) + ".log", true);
+				writer.write(sMessage);
 				writer.close();
 			}
 			catch (Exception e)
