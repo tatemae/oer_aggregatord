@@ -92,6 +92,7 @@ public class DBThread extends Thread {
         
 		try
 		{
+			Logger.status("Looking in " + sDBConfigFile + " for " + sRailsEnv + " database settings");
 			BufferedReader reader = new BufferedReader(new FileReader(sDBConfigFile));
 			String sLine = reader.readLine();
 			while(sLine != null)
