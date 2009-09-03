@@ -81,10 +81,9 @@ public class Harvester extends DBThread
 		"FROM feeds LEFT OUTER JOIN services ON (feeds.service_id = services.id) ";
 	private static final String STALE_FEEDS_CONDITION =
 		"WHERE failed_requests < 10 AND feeds.id != 0 AND feeds.status >= 0 AND DATE_ADD(last_harvested_at, INTERVAL harvest_interval SECOND) < NOW() ";
+//		"WHERE feeds.id = 1047364725";
 	private static final String QUERY_STALE_FEEDS = 
-		QUERY_FEEDS + STALE_FEEDS_CONDITION + "ORDER BY feeds.priority";
-//	private static final String QUERY_STALE_FEEDS = 
-//		QUERY_FEEDS + "WHERE feeds.id = 1047364725";
+		QUERY_FEEDS + STALE_FEEDS_CONDITION + " ORDER BY feeds.priority";
 
 	// query for nuking broken feeds
 	// DELETE FROM feeds WHERE feeds.failed_requests = 10 AND feeds.id IN (SELECT f.id FROM (SELECT feeds.id, COUNT(entries.id) FROM feeds LEFT JOIN entries ON entries.feed_id = feeds.id GROUP BY feeds.id, feeds.title, feeds.uri ORDER BY count) AS f WHERE f.count = 0)
@@ -932,8 +931,11 @@ public class Harvester extends DBThread
             
             // address to view the RSS (HTML)
             if (feedInfo.sDisplayURI == null || feedInfo.sDisplayURI.length() == 0) feedInfo.sDisplayURI = feed.getLink();
-            if (feedInfo.sDisplayURI == null || feedInfo.sDisplayURI.length() == 0) feedInfo.sDisplayURI = feedInfo.sURI;
-            feedInfo.sDisplayURI = feedInfo.sDisplayURI.trim(); 
+            if (feedInfo.sDisplayURI == null || feedInfo.sDisplayURI.length() == 0 || feedInfo.sDisplayURI.equals(feedInfo.sURI)) {
+            	if (feedInfo.sURI.length() > 10) feedInfo.sDisplayURI = feedInfo.sURI.substring(0,feedInfo.sURI.indexOf('/',10)+1);
+            	else feedInfo.sDisplayURI = feedInfo.sURI;
+            }
+            feedInfo.sDisplayURI = feedInfo.sDisplayURI.trim();
             
             // if the description is null, make it the title
             feedInfo.sDescription = feed.getDescription();
