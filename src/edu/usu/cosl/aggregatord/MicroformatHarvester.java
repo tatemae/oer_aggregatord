@@ -102,24 +102,24 @@ public class MicroformatHarvester extends DBThread
 		}
 		cn.close();
 	}
-	public void run() 
-	{
-		try 
-		{
-			while(!bStop)
-			{
-				// harvest entries
-				harvestEntries();
-				
-				// sleep until its time to harvest again
-				if (!bStop) Thread.sleep((long)(dHarvestInterval*1000));
-			}
-		}
-		catch (Exception e) 
-		{
-			logger.error("Error in microformat harvester: " + e);
-		}
-	}
+//	public void run() 
+//	{
+//		try 
+//		{
+//			while(!bStop)
+//			{
+//				// harvest entries
+//				harvestEntries();
+//				
+//				// sleep until its time to harvest again
+//				if (!bStop) Thread.sleep((long)(dHarvestInterval*1000));
+//			}
+//		}
+//		catch (Exception e) 
+//		{
+//			logger.error("Error in microformat harvester: " + e);
+//		}
+//	}
 	
 	private Vector<EntryInfo> getEntriesNeedingHarvest(Connection cn)
 	{

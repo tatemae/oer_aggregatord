@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -646,35 +647,50 @@ public class Harvester extends DBThread
     	return sdf.format(new Date(lMillis));
 	}
 	
+	private class URLFetcher extends Thread {
+		HttpURLConnection uriConn;
+		File saveFile;
+		public URLFetcher(HttpURLConnection uriConn, File saveFile) {
+			this.uriConn = uriConn;
+			this.saveFile = saveFile;
+		}
+		public void run()
+		{
+	        try 
+	        {
+	        	InputStreamReader in = new InputStreamReader(uriConn.getInputStream(), "UTF8");
+	  			char[] data = new char[1024];
+	            int len = in.read(data);
+	            if (len > 0)
+	            {
+	            	FileOutputStream writer = new FileOutputStream(saveFile);
+	            	final byte[] utf8_bom = { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF };
+	   		        writer.write(utf8_bom);
+	            	OutputStreamWriter out = new OutputStreamWriter(writer, "UTF8");
+
+					while(len >= 0)
+					{
+						out.write(data, 0, len);
+						len = in.read(data);
+					}
+		            out.flush();
+		            out.close();
+	            }
+				in.close();
+	        } catch (IOException e) {
+	            logger.error("Failed to retrieve " + uriConn.getURL(), e);
+	        }
+		}
+	}
+	
 	private boolean saveUrlToFile(File saveFile, HttpURLConnection uriConn)
 	{
-    	boolean bData = false;
-        try 
-        {
-        	InputStreamReader in = new InputStreamReader(uriConn.getInputStream(), "UTF8");
-  			char[] data = new char[1024];
-            int len = in.read(data);
-            if (len > 0)
-            {
-            	bData = true;
-            	FileOutputStream writer = new FileOutputStream(saveFile);
-            	final byte[] utf8_bom = { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF };
-   		        writer.write(utf8_bom);
-            	OutputStreamWriter out = new OutputStreamWriter(writer, "UTF8");
-
-				while(len >= 0)
-				{
-					out.write(data, 0, len);
-					len = in.read(data);
-				}
-	            out.flush();
-	            out.close();
-            }
-			in.close();
-        } catch (IOException e) {
-            logger.error("Failed to retrieve " + uriConn.getURL(), e);
-        }
-        return bData;
+		URLFetcher fetcher = new URLFetcher(uriConn,saveFile);
+		fetcher.start();
+		while (!isShutdownRequested() && fetcher.isAlive()) {
+			try {Thread.sleep(500);}catch(InterruptedException e){}
+		}
+        return saveFile.length() > 0 && !isShutdownRequested();
 	}
 	
 	private String getFeedArchiveDir(FeedInfo feedInfo)
@@ -825,7 +841,8 @@ public class Harvester extends DBThread
 						if (harvestRomeFeed(feedInfo, new SyndFeedInput().build(new XmlReader(fArchive))))
 							logger.debug("Imported: ..." + (sFeedArchiveDir.length() > 20 ? sFeedArchiveDir.substring(sFeedArchiveDir.length() - 20) : sFeedArchiveDir) + "/" + fArchive.getName());
 					} catch (Exception e) {
-						logger.error("importArchivedFeeds - error: ", e);
+						logger.error("Error importing feed " + feedInfo.sTitle);
+						logger.debug("Feed error " + feedInfo.sFeedURI, e);
 					}
 				}
 			}
@@ -1747,6 +1764,8 @@ public class Harvester extends DBThread
 	{
 		try
 		{
+			logger.debug("Checking OAI Endpoints for new collections");
+			
 			Hashtable<String,String> htShortNames = buildShortNamesHashTable();
 			
 			// loop through the registered oai end points
@@ -1758,6 +1777,8 @@ public class Harvester extends DBThread
 			ResultSet rsEndpoints = stEndpoints.executeQuery("SELECT * FROM oai_endpoints");
 			while (rsEndpoints.next())
 			{
+				if (isShutdownRequested()) break;
+				
 				String sURI = rsEndpoints.getString("uri");
 				String sMetadataFormat = rsEndpoints.getString("metadata_prefix");
 				String sHarvestedFromDisplayURI = rsEndpoints.getString("display_uri");
@@ -1804,7 +1825,7 @@ public class Harvester extends DBThread
 	            	}
 	            }
 			}
-			pstAddFeed.executeBatch();
+			if (!isShutdownRequested()) pstAddFeed.executeBatch();
 			pstFeeds.close();
 			stEndpoints.close();
 			rsEndpoints.close();
@@ -1821,8 +1842,10 @@ public class Harvester extends DBThread
 		ResultSet rsStaleFeeds = null;
 		try
 		{
-			// see if any of the registered OAI end points has new collection sets
-			if (bDiscoverOAISets) discoverOAISets();
+			// create a vector for storing the feeds
+			Vector<FeedInfo> vFeeds = new Vector<FeedInfo>();
+
+			if (isShutdownRequested()) return vFeeds;
 			
 			// prepare statement for retrieving stale feeds
 			cnFeeds = getConnection();
@@ -1830,9 +1853,6 @@ public class Harvester extends DBThread
 			
 			getLanguageMappings(cnFeeds);	
 	
-			// create a vector for storing the feeds
-			Vector<FeedInfo> vFeeds = new Vector<FeedInfo>();
-
 			// query the db for feeds whose were refreshed longer ago than their refresh interval
 			rsStaleFeeds = stGetStaleFeeds.executeQuery(QUERY_STALE_FEEDS);
 			while (rsStaleFeeds.next())
@@ -1925,16 +1945,11 @@ public class Harvester extends DBThread
 //		harvester.harvestFeed(fi);
 //	}
 	
-	private static void getConfigOptions()
+	private static void getConfigOptions(String sPropertiesFile) throws IOException
 	{
-		Properties properties = new Properties();
 	    try 
 	    {
-	    	// load the property file
-	    	FileInputStream in = new FileInputStream("aggregatord.properties");
-	        properties.load(in);
-	        in.close();
-
+	    	Properties properties = loadPropertyFile(sPropertiesFile);
 	        getLoggerAndDBOptions(properties);
 	        
 	        String sValue = properties.getProperty("discover_oai_sets");
@@ -1951,9 +1966,10 @@ public class Harvester extends DBThread
 	        sArchivePath = System.getProperty("FEED_ARCHIVE_PATH", sArchivePath);
 	        logger.debug("Using feed archive path: " + sArchivePath);
 	    }
-	    catch (Exception e) 
+	    catch (IOException e) 
 	    {
-	    	logger.error(e);
+	    	logger.fatal(e);
+	    	throw(e);
 	    }
 	}
 	
@@ -2051,14 +2067,18 @@ public class Harvester extends DBThread
 
 	private static boolean harvestStaleFeeds() 
 	{
-		logger.info("==========================================================Harvest");
+		logger.debug("==========================================================Harvest");
 		boolean bChanges = false;
 		System.setProperty("sun.net.client.defaultReadTimeout","" + nConnectionTimeout*1000);
 		
-		logger.info("Harvester is checking for stale feeds");
+		if (bDiscoverOAISets) discoverOAISets();
+
+		if (isShutdownRequested()) return false;
+
+		logger.debug("Checking for stale feeds");
 		Vector<FeedInfo> vFeeds = getStaleFeeds();
 
-		if (isShutdownRequested()) return bChanges;
+		if (isShutdownRequested()) return false;
 		
 		if (vFeeds.size() > 0)
 		{
@@ -2082,24 +2102,27 @@ public class Harvester extends DBThread
 		return bChanges;
 	}
 	
-	public static boolean harvest()
+	public static boolean harvest(String sPropertiesFile) throws IOException
 	{
 		try
 		{
-			getConfigOptions();
+			getConfigOptions(sPropertiesFile);
 			return harvestStaleFeeds();
 		}
-		catch (Exception e)
+		catch (IOException e)
 		{
 			logger.error(e);
+			throw(e);
 		}
-		return false;
 	}
 	
 	public static void main(String[] args) 
 	{
-		harvest();
-//		logger.stopLogging();
+		try {
+			harvest(args.length > 0 ? args[0] : "aggregatord.properties");
+		} catch (IOException e) {
+			logger.error(e);
+		}
 	}
 }
 

@@ -62,7 +62,7 @@ public class AggregatorDaemon implements Daemon
 		for (int nThread = 0; nThread < nWorkerThreads; nThread++) 
 		{
 			workerThreads[nThread] = new Harvester(toDoQueue, activeJobsQueue);
-			workerThreads[nThread].start();
+//			workerThreads[nThread].start();
 		}
 //		logger.info("Started " + nWorkerThreads + " worker threads");
 	}
@@ -192,7 +192,7 @@ public class AggregatorDaemon implements Daemon
 		int nRunningThreads = 0;
 		for (int nThread = 0; nThread < workerThreads.length; nThread++)
 		{
-			if (Thread.State.RUNNABLE == workerThreads[nThread].getState()) nRunningThreads++;
+//			if (Thread.State.RUNNABLE == workerThreads[nThread].getState()) nRunningThreads++;
 		}
 //		Logger.status("Status (stale, runnable, active, to do): " + nStaleFeeds + ", " + nRunningThreads + ", " + activeJobsQueue.size() + ", " + toDoQueue.size());
 	}
