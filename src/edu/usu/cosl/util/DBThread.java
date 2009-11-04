@@ -4,9 +4,12 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Connection;
 import java.sql.Timestamp;
+
 import java.util.Properties;
 import java.util.Date;
+
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 
@@ -17,10 +20,16 @@ import org.apache.commons.dbcp.PoolingDriver;
 import org.apache.commons.dbcp.DriverManagerConnectionFactory;
 import org.apache.commons.pool.impl.StackKeyedObjectPoolFactory;
 
+import org.apache.log4j.Appender;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
+import org.apache.log4j.SimpleLayout;
+
 public class DBThread extends Thread {
 
 	protected boolean bStop = false;
-	protected static Logger log = Logger.getLogger();
+	static public Logger logger = Logger.getLogger(DBThread.class);
 	
 	private static String sUser = "root";
 	private static String sPassword = "";
@@ -70,7 +79,7 @@ public class DBThread extends Thread {
 	        in.close();
 	        return properties;
 	    } catch (Exception e) {
-	    	Logger.error("Unable to load properties file: " + sFile, e);
+	    	logger.error("Unable to load properties file: " + sFile, e);
 	    	throw e;
 	    }
 	}
@@ -80,11 +89,11 @@ public class DBThread extends Thread {
 	}
 	public static void getLoggerAndDBOptions(Properties properties) throws Exception
 	{
-        Logger.getOptions(properties);
-        
+		PropertyConfigurator.configure(properties);
+		
         String sValue = properties.getProperty("db_yml");
-        String sDBConfigFile = (sValue == null) ? "config/database.yml" : sValue;
-        sDBConfigFile = System.getProperty("RAILS_DB_CONFIG", sDBConfigFile);
+        String sDBConfigFile = (sValue == null) ? "config/database.yml" : sValue.trim();
+        sDBConfigFile = System.getProperty("RAILS_DB_CONFIG", sDBConfigFile).trim();
 
         sValue = properties.getProperty("rails_env");
         if (sValue != null) sRailsEnv = sValue;
@@ -92,7 +101,7 @@ public class DBThread extends Thread {
         
 		try
 		{
-			Logger.status("Looking in " + sDBConfigFile + " for " + sRailsEnv + " database settings");
+			logger.info("Looking in " + sDBConfigFile + " for " + sRailsEnv + " database settings");
 			BufferedReader reader = new BufferedReader(new FileReader(sDBConfigFile));
 			String sLine = reader.readLine();
 			while(sLine != null)
@@ -124,8 +133,62 @@ public class DBThread extends Thread {
 		} 
 		catch (Exception e)
 		{
-			Logger.error("Unable to load database configuration file", e);
+			logger.error("Unable to load database configuration file", e);
 			throw e;
 		}
 	}
+	static private File getPidFile() {
+		return new File(System.getenv("daemon.pidfile"));
+	}
+
+	static private Thread mainThread;
+	
+	static private void daemonize() {
+		mainThread = Thread.currentThread();
+		getPidFile().deleteOnExit();
+		System.out.close();
+		System.err.close();
+	}
+
+	static private boolean shutdownRequested = false;
+
+	static private void addDaemonShutdownHook() {
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			public void run() {
+				DBThread.shutdown();
+			}
+		});
+	}
+	
+	static private Thread getMainDaemonThread() {
+		return mainThread;
+	}
+
+	static private void shutdown() {
+		shutdownRequested = true;
+		try {
+			getMainDaemonThread().join();
+			addDaemonShutdownHook();
+		} catch (InterruptedException e) {
+			logger.error("Interrupted which waiting on main daemon thread to complete.");
+		}
+	}
+
+	static public boolean isShutdownRequested() {
+		return shutdownRequested;
+	}
+
+	protected static void startup() {
+		Appender startupAppender = new ConsoleAppender(new SimpleLayout(),"System.err");
+		try {
+			logger.addAppender(startupAppender);
+			// do sanity checks and startup actions
+			daemonize();
+		} catch (Throwable e) {
+			logger.fatal("Startup failed.", e);
+		} finally {
+			logger.removeAppender(startupAppender);
+		}
+	}
+
 }

@@ -33,7 +33,7 @@ public class Locales extends DBThread {
     	}
     	catch(Exception e)
     	{
-    		Logger.error("Unable to read language mappings from db", e);
+    		logger.error("Unable to read language mappings from db", e);
     	}
 		
 	}

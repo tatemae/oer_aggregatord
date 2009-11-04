@@ -8,7 +8,7 @@ import java.io.IOException;
 
 import java.util.concurrent.ArrayBlockingQueue;
 
-import edu.usu.cosl.util.Logger;
+//import edu.usu.cosl.util.Logger;
 import org.apache.commons.daemon.Daemon;
 import org.apache.commons.daemon.DaemonContext;
 
@@ -47,7 +47,7 @@ public class AggregatorDaemon implements Daemon
 	
 	public static void main(String[] args) 
 	{
-		Logger.getLogger();
+//		Logger.getLogger();
 		AggregatorDaemon daemon = new AggregatorDaemon();
 		daemon.init(null);
 		daemon.start();
@@ -64,7 +64,7 @@ public class AggregatorDaemon implements Daemon
 			workerThreads[nThread] = new Harvester(toDoQueue, activeJobsQueue);
 			workerThreads[nThread].start();
 		}
-		Logger.info("Started " + nWorkerThreads + " worker threads");
+//		logger.info("Started " + nWorkerThreads + " worker threads");
 	}
 	
 	private void stopWorkerThreads() throws InterruptedException
@@ -133,7 +133,7 @@ public class AggregatorDaemon implements Daemon
 	        sValue = properties.getProperty("request_timeout");
 	        if (sValue != null) Harvester.setConnectionTimeout(Integer.parseInt(sValue));
 	        
-	        Logger.getOptions(properties);
+//	        Logger.getOptions(properties);
 	    }
 	    catch (IOException e) 
 	    {
@@ -194,7 +194,7 @@ public class AggregatorDaemon implements Daemon
 		{
 			if (Thread.State.RUNNABLE == workerThreads[nThread].getState()) nRunningThreads++;
 		}
-		Logger.status("Status (stale, runnable, active, to do): " + nStaleFeeds + ", " + nRunningThreads + ", " + activeJobsQueue.size() + ", " + toDoQueue.size());
+//		Logger.status("Status (stale, runnable, active, to do): " + nStaleFeeds + ", " + nRunningThreads + ", " + activeJobsQueue.size() + ", " + toDoQueue.size());
 	}
 	public void stop()
 	{

@@ -32,7 +32,7 @@ import java.io.IOException;
 import au.id.jericho.lib.html.*;
 
 import edu.usu.cosl.util.DBThread;
-import edu.usu.cosl.util.Logger;
+//import edu.usu.cosl.util.Logger;
 import edu.usu.cosl.microformats.EventGeneric;
 
 public class MicroformatHarvester extends DBThread 
@@ -84,7 +84,7 @@ public class MicroformatHarvester extends DBThread
 		Connection cn = getConnection();
 		Vector<EntryInfo> vEntries = getEntriesNeedingHarvest(cn);
 		
-		if (vEntries.size() > 0) Logger.info("Harvesting pages for microformats: " + vEntries.size());
+		if (vEntries.size() > 0) logger.info("Harvesting pages for microformats: " + vEntries.size());
 		
 		// loop through the entries
 		for (ListIterator<EntryInfo> liEntries = vEntries.listIterator(); liEntries.hasNext();)
@@ -97,7 +97,7 @@ public class MicroformatHarvester extends DBThread
 			}
 			catch (Exception e)
 			{
-				Logger.error("Error harvesting microformats from: " +  entry.sLink);
+				logger.error("Error harvesting microformats from: " +  entry.sLink);
 			}
 		}
 		cn.close();
@@ -117,7 +117,7 @@ public class MicroformatHarvester extends DBThread
 		}
 		catch (Exception e) 
 		{
-			Logger.error("Error in microformat harvester: " + e);
+			logger.error("Error in microformat harvester: " + e);
 		}
 	}
 	
@@ -147,8 +147,8 @@ public class MicroformatHarvester extends DBThread
 		}
 		catch (SQLException e)
 		{
-			Logger.error("tcb1: " + e);
-			Logger.error(e.getNextException());
+			logger.error("tcb1: " + e);
+			logger.error(e.getNextException());
 			try
 			{
 				if (rsEntries != null) rsEntries.close();
@@ -182,7 +182,7 @@ public class MicroformatHarvester extends DBThread
 		}
 		catch (Exception e)
 		{
-			Logger.error(e);
+			logger.error(e);
 		}
 		return nFile + "-" + (localFile != null && localFile.length() > 6 ? localFile.substring(0,5) : "") + ".txt";
 	}
@@ -222,7 +222,7 @@ public class MicroformatHarvester extends DBThread
 		}
 		catch (Exception e) 
 		{
-			Logger.error(e);
+			logger.error(e);
 		}
 		return sb.toString();
 	}
@@ -361,7 +361,7 @@ public class MicroformatHarvester extends DBThread
 		// see: http://microformats.org/wiki/hcalendar-cheatsheet
 		
 		// jericho
-		Logger.info("Harvesting for microformats: " + sPage);
+		logger.info("Harvesting for microformats: " + sPage);
 		
 		Timestamp time = Harvester.currentTime();
 		au.id.jericho.lib.html.Source source = new Source(new URL(sPage));
@@ -387,7 +387,7 @@ public class MicroformatHarvester extends DBThread
 			{
 				if (sSummary.length() > 200)
 				{
-					Logger.error("Event name truncated: " + sSummary);
+					logger.error("Event name truncated: " + sSummary);
 					sSummary = sSummary.substring(0,197) + "...";
 				}
 				mfEvent.setName(sSummary);
@@ -470,9 +470,9 @@ public class MicroformatHarvester extends DBThread
 			}
 			catch (Exception e)
 			{
-				Logger.error("Error adding event to database.");
-				Logger.error(mfEvent.toString());
-				Logger.error(e);
+				logger.error("Error adding event to database.");
+				logger.error(mfEvent.toString());
+				logger.error(e);
 			}
 		}
 		mdm.close();
@@ -480,7 +480,7 @@ public class MicroformatHarvester extends DBThread
 		stUpdateEntryInfo.setBoolean(2, bKnownToContainMicroformats ? true : lEvents.size() > 0);
 		stUpdateEntryInfo.setInt(3, nEntryID);
 		stUpdateEntryInfo.execute();
-		if (nNewEvents > 0) Logger.info("Harvested events from " + sPage + ": " + nNewEvents);
+		if (nNewEvents > 0) logger.info("Harvested events from " + sPage + ": " + nNewEvents);
 		return Harvester.secondsSince(time);
 	}
 
@@ -488,8 +488,8 @@ public class MicroformatHarvester extends DBThread
 	{
 		try
 		{
-			Logger.setLogToConsole(true);
-			Logger.setConsoleLogLevel(10);
+//			Logger.setLogToConsole(true);
+//			Logger.setConsoleLogLevel(10);
 			MicroformatHarvester mfHarvester = new MicroformatHarvester();
 			Connection cn = getConnection();
 			for (int nPage = 0; nPage < asTestPages.length; nPage++)
@@ -510,7 +510,7 @@ public class MicroformatHarvester extends DBThread
 		}
 		catch (Exception e)
 		{
-			Logger.error(e);
+			logger.error(e);
 		}
 	}
 

@@ -14,7 +14,7 @@ import java.util.ListIterator;
 
 import com.sun.syndication.io.impl.DateParser;
 
-import edu.usu.cosl.util.Logger;
+//import edu.usu.cosl.util.Logger;
 import edu.usu.cosl.util.DBThread;
 import edu.usu.cosl.microformats.EventConcert;
 import edu.usu.cosl.microformats.EventConference;
@@ -193,7 +193,7 @@ public class MicroformatDBManager extends DBThread {
 		}
 		catch (Exception e)
 		{
-			Logger.error(e);
+			logger.error(e);
 			if (stEventInDB != null)
 			{
 				try

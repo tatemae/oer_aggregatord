@@ -51,7 +51,6 @@ import com.sun.syndication.feed.module.Module;
 import edu.usu.cosl.syndication.feed.module.DCTermsModule;
 import edu.usu.cosl.syndication.io.impl.MarkupProperty;
 
-import edu.usu.cosl.util.Logger;
 import edu.usu.cosl.util.DBThread;
 
 import com.sun.syndication.io.SyndFeedInput;
@@ -161,10 +160,10 @@ public class Harvester extends DBThread
 		sdf.applyPattern("yyyy-MM-dd");
 	}
 
-	public static Logger getLogger()
-	{
-		return log;
-	}
+//	public static Logger getLogger()
+//	{
+//		return log;
+//	}
 	public Connection initDBConnection() throws IOException, SQLException, ClassNotFoundException
 	{
 		cnWorker = getConnection();
@@ -227,7 +226,7 @@ public class Harvester extends DBThread
 		}
 		catch (SQLException e)
 		{
-			Logger.error("closeDBConnection (" + nLoc + "): ", e);
+			logger.error("closeDBConnection (" + nLoc + "): ", e);
 		}
 		pstFindDuplicateEntries = null;
 		pstFindDuplicateOAIEntries = null;
@@ -247,7 +246,7 @@ public class Harvester extends DBThread
 	
 	public boolean harvestFeed(FeedInfo feedInfo)
 	{
-		Logger.info("Harvesting: " + feedInfo.sTitle/* + " (" + feedInfo.sURI + ")" */);
+		logger.debug("Harvesting: " + feedInfo.sTitle/* + " (" + feedInfo.sURI + ")" */);
 
 		// track the start time
 		startTime = currentTime();
@@ -267,39 +266,43 @@ public class Harvester extends DBThread
 	            // add the new feed to the db if we've never harvested it before (we are running a test case standalone)
 	            if (feedInfo.nFeedID == FeedInfo.FEED_ID_UNKNOWN) addFeed(feedInfo);
 			}
-			switch (feedInfo.nServiceID)
-			{
-				case FeedInfo.SERVICE_DELICIOUS:
+			if (!isShutdownRequested()) {
+				
+				switch (feedInfo.nServiceID)
 				{
-					harvestDeliciousFeed(feedInfo);
-					break;
+					case FeedInfo.SERVICE_DELICIOUS:
+					{
+						harvestDeliciousFeed(feedInfo);
+						break;
+					}
+					case FeedInfo.SERVICE_FLICKR:
+					{
+						harvestFlickrFeed(feedInfo);
+						break;
+					}
+					case FeedInfo.SERVICE_MERLOT:
+					{
+						harvestMerlotFeed(feedInfo);
+						break;
+					}
+					default:
+					{
+						harvestRSSFeed(feedInfo);
+						break;
+					}
 				}
-				case FeedInfo.SERVICE_FLICKR:
-				{
-					harvestFlickrFeed(feedInfo);
-					break;
-				}
-				case FeedInfo.SERVICE_MERLOT:
-				{
-					harvestMerlotFeed(feedInfo);
-					break;
-				}
-				default:
-				{
-					harvestRSSFeed(feedInfo);
-					break;
-				}
+		        nTotalNewEntries += nNewEntries;
+		        nTotalUpdatedEntries += nUpdatedEntries;
+		        nTotalDeletedEntries += nDeletedEntries;
+		        bChanges = (nNewEntries > 0 ||  nUpdatedEntries > 0 || nDeletedEntries > 0);
+		        String sResults = ("Updates: " + nNewEntries + ", " + nUpdatedEntries + ", " + nDeletedEntries + " (new, updated, deleted) in " + secondsSinceStr(startTime) + " seconds" + (bChanges ? " from " + feedInfo.sTitle : ""));
+		        if (bChanges) logger.info(sResults);
+		        else logger.debug(sResults);
 			}
-	        nTotalNewEntries += nNewEntries;
-	        nTotalUpdatedEntries += nUpdatedEntries;
-	        nTotalDeletedEntries += nDeletedEntries;
-	        bChanges = (nNewEntries > 0 ||  nUpdatedEntries > 0 || nDeletedEntries > 0); 
-	    	Logger.log(bChanges ? Logger.STATUS : Logger.INFO, "Updates: " + nNewEntries + ", " + nUpdatedEntries + ", " + nDeletedEntries + " (new, updated, deleted) in " + secondsSinceStr(startTime) + " seconds" + (bChanges ? " from " + feedInfo.sTitle : ""));
-	
 			// close the db statements and connections
 			closeDBConnection();
 		} catch (Exception e) {
-			Logger.error("harvestFeed error: ", e);
+			logger.error("harvestFeed error: ", e);
 		}
 
 		// remove the feed from the active queue
@@ -409,12 +412,12 @@ public class Harvester extends DBThread
 		}
 		catch (SQLException e) 
 		{
-			Logger.error("harvestMerlotFeed-1: ", e);
+			logger.error("harvestMerlotFeed-1: ", e);
 			handleFailedRequest(feedInfo);
 		}
 		catch (Throwable t)
 		{
-			Logger.error("harvestMerlotFeed-2: " + t);
+			logger.error("harvestMerlotFeed-2: " + t);
 			handleFailedRequest(feedInfo);
 		}
 	}
@@ -495,12 +498,12 @@ public class Harvester extends DBThread
 				// if the feed hasn't been updated since we last requested it, bail now
 				if (lastUpdate == null)
 				{
-					Logger.error("Failed request for delicious feed last update time, HttpResponseCode = " + delicious.getHttpResult());
+					logger.error("Failed request for delicious feed last update time, HttpResponseCode = " + delicious.getHttpResult());
 					handleFailedRequest(feedInfo);
 				}
 				else if (feedInfo.lLastHarvested > lastUpdate.getTime())
 				{
-					Logger.info("Delicious feed hasn't been updated since it was last requested.");
+					logger.debug("Delicious feed hasn't been updated since it was last requested.");
 					noChanges(feedInfo);
 				}
 			}
@@ -534,7 +537,7 @@ public class Harvester extends DBThread
             		
             		// add the entry now (as part of a batch update)
             		int nEntryID = addDeliciousEntry(feedInfo,entry);
-//            		Logger.info("Adding tags for entry: " + entry.getTag());
+//            		logger.debug("Adding tags for entry: " + entry.getTag());
             		addSubjectsForEntry(nEntryID, entry.getTagsAsArray(" "));
             	}
             }
@@ -543,19 +546,19 @@ public class Harvester extends DBThread
 		}
 		catch (SQLException e) 
 		{
-			Logger.error("harvestDeliciousFeed-1: ", e);
+			logger.error("harvestDeliciousFeed-1: ", e);
 			handleFailedRequest(feedInfo);
 		}
 		catch (Throwable t)
 		{
-			Logger.error("harvestDeliciousFeed-2: " + t);
+			logger.error("harvestDeliciousFeed-2: " + t);
 			handleFailedRequest(feedInfo);
 		}
 	}
 	private void handleFailedRequest(FeedInfo feedInfo)
 	{
-//		Logger.info("Error occured retrieving " + feedInfo.sURI + "\n" + e);
-		Logger.info((feedInfo.nFailedRequests + 1) + " harvest failures for: " + feedInfo.sTitle);
+//		logger.debug("Error occured retrieving " + feedInfo.sURI + "\n" + e);
+		logger.debug((feedInfo.nFailedRequests + 1) + " harvest failures for: " + feedInfo.sTitle);
 
 		// how many minutes to wait before requesting again, 
 		final int[] anFailedRequestIntervals = {1,5,30,60,6*60,24*60,24*60,24*60,24*60,24*60};
@@ -578,7 +581,7 @@ public class Harvester extends DBThread
 		}
 		catch (Exception e)
 		{
-			Logger.error("handleFailedRequest: ", e);
+			logger.error("handleFailedRequest: ", e);
 			try
 			{
 				if (stUpdateFeedInfoForFailure != null)
@@ -610,7 +613,7 @@ public class Harvester extends DBThread
 		}
 		catch (Exception e)
 		{
-			Logger.error("getFlickrId: " + e);
+			logger.error("getFlickrId: " + e);
 			return null;
 		}
 	}
@@ -632,7 +635,7 @@ public class Harvester extends DBThread
 			}
 			catch (Exception e)
 			{
-				Logger.error("harvestFlickrFeed: " + e);
+				logger.error("harvestFlickrFeed: " + e);
 			}
 		}
 		harvestRSSFeed(feedInfo);
@@ -669,7 +672,7 @@ public class Harvester extends DBThread
             }
 			in.close();
         } catch (IOException e) {
-            Logger.error("Failed to retrieve " + uriConn.getURL(), e);
+            logger.error("Failed to retrieve " + uriConn.getURL(), e);
         }
         return bData;
 	}
@@ -706,7 +709,7 @@ public class Harvester extends DBThread
         try
 		{
         	// create a connection
-        	Logger.info("Requesting: " + (feedInfo.sFeedURI.length() > 60 ? (feedInfo.sFeedURI.substring(7,20) + "..." + feedInfo.sFeedURI.substring(feedInfo.sFeedURI.length() - 40)) : feedInfo.sFeedURI));
+        	logger.debug("Requesting: " + (feedInfo.sFeedURI.length() > 60 ? (feedInfo.sFeedURI.substring(7,20) + "..." + feedInfo.sFeedURI.substring(feedInfo.sFeedURI.length() - 40)) : feedInfo.sFeedURI));
         	uriConn = (HttpURLConnection)new URL(feedInfo.sFeedURI).openConnection();
         	
         	// set a timeout value just in case it takes forever
@@ -741,7 +744,7 @@ public class Harvester extends DBThread
         }
 		catch (com.sun.syndication.io.ParsingFeedException e)
 		{
-			Logger.error("Failed to parse: " + feedInfo.sFeedURI + " " + e);
+			logger.error("Failed to parse: " + feedInfo.sFeedURI + " " + e);
 			feedInfo.sErrorMessage = e.toString();
 			handleFailedRequest(feedInfo);
 		}
@@ -758,17 +761,17 @@ public class Harvester extends DBThread
 
 				// one possible cause of failure is that it hasn't been modified since we last requested it
 				if (nResponseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
-					Logger.info( "Feed hasn't been updated: " + feedInfo.sTitle/* + " (" + feedInfo.sURI + ")"*/);
+					logger.debug( "Feed hasn't been updated: " + feedInfo.sTitle/* + " (" + feedInfo.sURI + ")"*/);
 				}
 				else
 				{
-    				Logger.error("Failed request for: " + feedInfo.sFeedURI + " (" + nResponseCode + ") " + e);
+    				logger.error("Failed request for: " + feedInfo.sFeedURI + " (" + nResponseCode + ") " + e);
     				feedInfo.sErrorMessage = "(" + nResponseCode + ") - " + e;
     				handleFailedRequest(feedInfo);
 				}
         		// update the feed last updated and priority
 	            if (feedInfo.nFeedID != FeedInfo.FEED_ID_UNKNOWN) {
-	            	Logger.status("No Changes");
+	            	logger.info("No Changes");
 	            	noChanges(feedInfo);
 	            }
 			}
@@ -820,9 +823,9 @@ public class Harvester extends DBThread
 					try{
 						feedInfo.lLastHarvested = lDate;
 						if (harvestRomeFeed(feedInfo, new SyndFeedInput().build(new XmlReader(fArchive))))
-							Logger.info("Imported: ..." + (sFeedArchiveDir.length() > 20 ? sFeedArchiveDir.substring(sFeedArchiveDir.length() - 20) : sFeedArchiveDir) + "/" + fArchive.getName());
+							logger.debug("Imported: ..." + (sFeedArchiveDir.length() > 20 ? sFeedArchiveDir.substring(sFeedArchiveDir.length() - 20) : sFeedArchiveDir) + "/" + fArchive.getName());
 					} catch (Exception e) {
-						Logger.error("importArchivedFeeds - error: ", e);
+						logger.error("importArchivedFeeds - error: ", e);
 					}
 				}
 			}
@@ -839,22 +842,29 @@ public class Harvester extends DBThread
 			if (!bHarvestFromWire) return;
 	        do
 	        {
+	        	if (isShutdownRequested()) return;
+
 	        	SyndFeed feed = getSyndFeed(feedInfo);
 	        	if (feed == null) return;
 	        	
-	            // harvest the feed and keep track of the number of new entries
-	            boolean bChanges = harvestRomeFeed(feedInfo, feed);
-	            
-	            // a resumption token means we requested an OAI feed got back partial results
-	            if (feedInfo.sResumptionToken != null)
-	            {
-	            	feedInfo.sFeedURI = feedInfo.sFeedURI.substring(0, feedInfo.sFeedURI.indexOf('&')) + "&resumptionToken=" + URLEncoder.encode(feedInfo.sResumptionToken, "UTF-8");
-	            	Logger.info("New OAI entries: " + nNewEntries + " - " + feedInfo.sTitle);
-	            }
+	        	boolean bChanges = false;
+	        	
+	        	if (!isShutdownRequested()) {
+		        	
+		            // harvest the feed and keep track of the number of new entries
+		            bChanges = harvestRomeFeed(feedInfo, feed);
+		            
+		            // a resumption token means we requested an OAI feed got back partial results
+		            if (feedInfo.sResumptionToken != null)
+		            {
+		            	feedInfo.sFeedURI = feedInfo.sFeedURI.substring(0, feedInfo.sFeedURI.indexOf('&')) + "&resumptionToken=" + URLEncoder.encode(feedInfo.sResumptionToken, "UTF-8");
+		            	logger.debug("New OAI entries: " + nNewEntries + " - " + feedInfo.sTitle);
+		            }
+	        	}
 	            // delete the archive if it contained no new entries
 	            String sArchive = getFeedArchiveFile(feedInfo);
 	            if (bChanges) {
-	            	Logger.info("Archived feed to: " + sArchive);
+	            	logger.debug("Archived feed to: " + sArchive);
 	            } else { 
 	            	File f = new File(sArchive);
 	            	if (f.exists()) f.delete();
@@ -864,7 +874,7 @@ public class Harvester extends DBThread
 		}
 		catch (Throwable t)
 		{
-			Logger.error("harvestRSSFeed-2: " + t);
+			logger.error("harvestRSSFeed-2: " + t);
 			handleFailedRequest(feedInfo);
 		}
 	}
@@ -959,6 +969,8 @@ public class Harvester extends DBThread
             List lEntries = feed.getEntries();
             for (ListIterator entries = lEntries.listIterator(); entries.hasNext() && nNewEntries < nMaxEntries;)
             {
+            	if (isShutdownRequested()) return bChanges;
+            	
             	// get info about the entry
             	entry = (SyndEntry)entries.next();
             	
@@ -1045,9 +1057,9 @@ public class Harvester extends DBThread
 		            		}
 			            	catch (Exception e)
 			            	{
-			            		Logger.error("Error adding entry");
-			            		Logger.error(entry.toString());
-			            		Logger.error(e);
+			            		logger.error("Error adding entry");
+			            		logger.error(entry.toString());
+			            		logger.error(e);
 			            	}
 	            		}
 	            	}
@@ -1063,18 +1075,18 @@ public class Harvester extends DBThread
             // if the last entry doesn't have a published date none of them do 
             if (entry != null && entry.getPublishedDate() == null)
 			{
-				Logger.warn("No published dates in " + feedInfo.sTitle);
+				logger.warn("No published dates in " + feedInfo.sTitle);
 			}
 //   			if (nNewEntrySubjects > 0) pstAddEntrySubject.executeBatch();
 		}
 		catch (SQLException e) 
 		{ 
-			Logger.error("harvestRomeFeed-1: ", e);
+			logger.error("harvestRomeFeed-1: ", e);
 			handleFailedRequest(feedInfo);
 		}
 		catch (Throwable t)
 		{
-			Logger.error("harvestRomeFeed-2: " + t);
+			logger.error("harvestRomeFeed-2: " + t);
 			handleFailedRequest(feedInfo);
 		}
         // update the feed last updated and priority
@@ -1133,7 +1145,7 @@ public class Harvester extends DBThread
 		}
 		catch (SQLException e)
 		{
-			Logger.error("extractImagesFromEntry: ", e);
+			logger.error("extractImagesFromEntry: ", e);
 		}
 	}
 
@@ -1162,7 +1174,7 @@ public class Harvester extends DBThread
 		{
 			updateFeedInfo(feedInfo);
 		} catch (Exception e) {
-			Logger.error("noChanges-error: ", e);
+			logger.error("noChanges-error: ", e);
 		}
 	}
 	
@@ -1213,7 +1225,7 @@ public class Harvester extends DBThread
 				addEntrySubject(nEntryID, asSubjects[nSubject]);
 			}
 		} catch(SQLException e) {
-			Logger.error("addSubjectsForEntry: " + nEntryID + " - " + arrayToList(asSubjects));
+			logger.error("addSubjectsForEntry: " + nEntryID + " - " + arrayToList(asSubjects));
 		}
 	}
 	
@@ -1238,7 +1250,7 @@ public class Harvester extends DBThread
 		if (sSubject.length() > 0)
 		{
 			String[] asSubjects = normalizeSubjectList(sSubject);
-//			if (asSubjects.length > 1) Logger.info("Converted: " + sSubject + " => " + arrayToList(asSubjects));
+//			if (asSubjects.length > 1) logger.debug("Converted: " + sSubject + " => " + arrayToList(asSubjects));
 			for (int nSubject = 0; nSubject < asSubjects.length; nSubject++)
 			{
 				String sNormalizedSubject = asSubjects[nSubject].trim();
@@ -1250,7 +1262,7 @@ public class Harvester extends DBThread
 						pstAddEntrySubject.executeUpdate();
 						nNewEntrySubjects++;
 					} catch(Exception e) {
-//						Logger.error("Error adding subject (" + sNormalizedSubject + ") to entry: " + nEntryID, e);
+//						logger.error("Error adding subject (" + sNormalizedSubject + ") to entry: " + nEntryID, e);
 					}
 					hsEntrySubjects.add(sNormalizedSubject);
 					if (nNewEntrySubjects > 100) {
@@ -1304,7 +1316,7 @@ public class Harvester extends DBThread
 		// permalink
 		if (sURI == null)
 		{
-			Logger.info("Null permalink in: " + feedInfo.sTitle/* + "(" + feedInfo.sURI + ")"*/);
+			logger.debug("Null permalink in: " + feedInfo.sTitle/* + "(" + feedInfo.sURI + ")"*/);
 			return 0;
 		}
 		pst.setString(2, sURI);
@@ -1450,7 +1462,7 @@ public class Harvester extends DBThread
 	
 	private void addFeed(FeedInfo feedInfo) throws SQLException
 	{
-		Logger.info("Adding feed: " + feedInfo.sTitle/* + " (" + feedInfo.sURI + ")."*/);
+		logger.debug("Adding feed: " + feedInfo.sTitle/* + " (" + feedInfo.sURI + ")."*/);
 		
 		// set up the prepared statement
 		pstAddFeed.setString(1, feedInfo.sURI);
@@ -1524,7 +1536,7 @@ public class Harvester extends DBThread
 		}
 		catch (SQLException e)
 		{
-			Logger.error("getServiceURI: ", e);
+			logger.error("getServiceURI: ", e);
 		}
 	}
 
@@ -1604,11 +1616,11 @@ public class Harvester extends DBThread
 			pstUpdateFeedInfo.setInt(7,feedInfo.nFeedID);
 			pstUpdateFeedInfo.executeUpdate();
 			
-//			Logger.i("Updating feed info: " + currentTime + "," + feedInfo.nPriority + "," + feedInfo.nFeedID);
+//			logger.i("Updating feed info: " + currentTime + "," + feedInfo.nPriority + "," + feedInfo.nFeedID);
 		}
 		catch (SQLException e)
 		{
-			Logger.error("updateFeedInfo: ", e);
+			logger.error("updateFeedInfo: ", e);
 		}
 	}
 	
@@ -1778,7 +1790,7 @@ public class Harvester extends DBThread
 	            	ResultSet rsFeeds = pstFeeds.executeQuery();
 	            	if (!rsFeeds.next())
 	            	{
-	            		Logger.info("Discovered new OAI set: " + sSetTitle);
+	            		logger.debug("Discovered new OAI set: " + sSetTitle);
 	            		pstAddFeed.setString(1, sFeedURI);
 	            		pstAddFeed.setString(2, sSetTitle);
 	            		String sShortTitle = htShortNames.get(sSetTitle);
@@ -1800,7 +1812,7 @@ public class Harvester extends DBThread
 		}
 		catch (Exception e)
 		{
-			Logger.error("discoverOAISets error: ", e);
+			logger.error("discoverOAISets error: ", e);
 		}
 	}
 	
@@ -1836,7 +1848,7 @@ public class Harvester extends DBThread
 		}
 		catch (SQLException e)
 		{
-			Logger.error("getStaleFeeds-1: ", e);
+			logger.error("getStaleFeeds-1: ", e);
 			try
 			{
 				if (rsStaleFeeds != null) rsStaleFeeds.close();
@@ -1856,7 +1868,7 @@ public class Harvester extends DBThread
 		}
 		catch (Exception e)
 		{
-			Logger.error("getStaleFeeds-2: " + e);
+			logger.error("getStaleFeeds-2: " + e);
 			return null;
 		}
 	}
@@ -1896,7 +1908,7 @@ public class Harvester extends DBThread
 		}
 		catch (InterruptedException e) 
 		{
-			Logger.error("run: " + e);
+			logger.error("run: " + e);
 		}
 	}
 
@@ -1928,7 +1940,7 @@ public class Harvester extends DBThread
 	        String sValue = properties.getProperty("discover_oai_sets");
 	        if (sValue != null) bDiscoverOAISets = "true".equals(sValue);
 	        sValue = properties.getProperty("request_timeout");
-	        try {if (sValue != null) nConnectionTimeout = Integer.parseInt(sValue);}catch(Exception nfe){Logger.error("Bad request_timeout value",nfe);}
+	        try {if (sValue != null) nConnectionTimeout = Integer.parseInt(sValue);}catch(Exception nfe){logger.error("Bad request_timeout value",nfe);}
 	        if ("development".equals(sRailsEnv)) bImportArchivedFeeds = true;
 	        sValue = properties.getProperty("import_archived_feed_data");
 	        if (sValue != null) bImportArchivedFeeds = "true".equals(sValue);
@@ -1937,11 +1949,11 @@ public class Harvester extends DBThread
 	        sValue = properties.getProperty("feed_archive_path");
 	        if (sValue != null) sArchivePath = sValue;
 	        sArchivePath = System.getProperty("FEED_ARCHIVE_PATH", sArchivePath);
-	        Logger.info("Using feed archive path: " + sArchivePath);
+	        logger.debug("Using feed archive path: " + sArchivePath);
 	    }
 	    catch (Exception e) 
 	    {
-	    	Logger.error(e);
+	    	logger.error(e);
 	    }
 	}
 	
@@ -1999,10 +2011,10 @@ public class Harvester extends DBThread
 		return sURI;
 	}
 	
-	public static String getLogMessages()
-	{
-		return Logger.getMessages();
-	}
+//	public static String getLogMessages()
+//	{
+//		return logger.getMessages();
+//	}
     static public void getLanguageMappings(Connection cn)
     {
     	try{
@@ -2016,7 +2028,7 @@ public class Harvester extends DBThread
 	    	}
     	}
     	catch(Exception e){
-    		Logger.error("Read from table language");
+    		logger.error("Read from table language");
     	}
     }
 
@@ -2033,32 +2045,39 @@ public class Harvester extends DBThread
 		}
 		catch (Exception e)
 		{
-			Logger.error("updateLanguagesRecordCount", e);
+			logger.error("updateLanguagesRecordCount", e);
 		}
 	}
 
 	private static boolean harvestStaleFeeds() 
 	{
-		Logger.status("==========================================================Harvest");
+		logger.info("==========================================================Harvest");
 		boolean bChanges = false;
 		System.setProperty("sun.net.client.defaultReadTimeout","" + nConnectionTimeout*1000);
 		
-		Logger.status("Harvester is checking for stale feeds");
+		logger.info("Harvester is checking for stale feeds");
 		Vector<FeedInfo> vFeeds = getStaleFeeds();
+
+		if (isShutdownRequested()) return bChanges;
+		
 		if (vFeeds.size() > 0)
 		{
-			Logger.status("Harvesting stale feeds: " + vFeeds.size());
+			logger.info("Harvesting stale feeds: " + vFeeds.size());
 
 			for (Enumeration<FeedInfo> eFeeds = vFeeds.elements(); eFeeds.hasMoreElements();) 
 			{
+				if (isShutdownRequested()) return bChanges;
+
 				Harvester h = new Harvester(null,null);
 				if (h.harvestFeed(eFeeds.nextElement())) bChanges = true;
 			}
+			if (isShutdownRequested()) return bChanges;
+
 			if (bChanges) updateLanguageRecordCounts();
 			
-	    	Logger.status("Harvesting finished: " + nTotalNewEntries + ", " + nTotalUpdatedEntries + ", " + nTotalDeletedEntries + " (new, updated, deleted)");
+	    	logger.info("Harvesting finished: " + nTotalNewEntries + ", " + nTotalUpdatedEntries + ", " + nTotalDeletedEntries + " (new, updated, deleted)");
 		} else {
-			Logger.status("Harvester found no stale feeds to harvest");
+			logger.info("Harvester found no stale feeds to harvest");
 		}
 		return bChanges;
 	}
@@ -2072,7 +2091,7 @@ public class Harvester extends DBThread
 		}
 		catch (Exception e)
 		{
-			Logger.error(e);
+			logger.error(e);
 		}
 		return false;
 	}
@@ -2080,7 +2099,7 @@ public class Harvester extends DBThread
 	public static void main(String[] args) 
 	{
 		harvest();
-		Logger.stopLogging();
+//		logger.stopLogging();
 	}
 }
 

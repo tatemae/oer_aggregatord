@@ -4,7 +4,7 @@ import com.sun.syndication.feed.synd.SyndEntry;
 import com.sun.syndication.feed.synd.SyndFeed;
 import com.sun.syndication.io.SyndFeedInput;
 
-import edu.usu.cosl.util.Logger;
+//import edu.usu.cosl.util.Logger;
 import edu.usu.cosl.syndication.io.impl.MarkupProperty;
 
 import java.io.StringReader;
@@ -13,8 +13,9 @@ import java.util.List;
 import java.util.ListIterator;
 
 import javax.xml.rpc.ServiceException;
+import edu.usu.cosl.util.DBThread;
 
-public class MerlotHarvester 
+public class MerlotHarvester extends DBThread
 {
 	private SqiTargetBindingStub searchStub;
 	private final static String sKey = "ariadnekey";
@@ -40,11 +41,11 @@ public class MerlotHarvester
 		}
 		catch (RemoteException e)
 		{
-			Logger.error("MerlotHarvester", e);
+			logger.error("MerlotHarvester", e);
 		}
 		catch (ServiceException e)
 		{
-			Logger.error("MerlotHarvester", e);
+			logger.error("MerlotHarvester", e);
 		}
 	}
 	
@@ -58,7 +59,7 @@ public class MerlotHarvester
 	{
 		try
 		{
-			Logger.info("Merlot Query: '" + asTerms[nTerm] + "' - " + nOffset);
+			logger.info("Merlot Query: '" + asTerms[nTerm] + "' - " + nOffset);
 			String sResult = searchStub.synchronousQuery(sKey, sQuery, nOffset);
 			nOffset += 25;
 //			Logger.info(sResult);
@@ -122,8 +123,8 @@ public class MerlotHarvester
 	
 	public static void main(String[] args) 
 	{
-		Logger.setLogToConsole(true);
-		Logger.setConsoleLogLevel(10);
+//		Logger.setLogToConsole(true);
+//		Logger.setConsoleLogLevel(10);
 		try
 		{
 			MerlotHarvester harvester = new MerlotHarvester();
@@ -151,12 +152,12 @@ public class MerlotHarvester
     					}
 					}
     			}
-				Logger.info((nEntries++) + " - " + entry.getTitle() + " - " + sOAIIdentifier + " - " + entry.getLink());
+				logger.info((nEntries++) + " - " + entry.getTitle() + " - " + sOAIIdentifier + " - " + entry.getLink());
 			}
 		}
 		catch (Exception e)
 		{
-			Logger.error(e);
+			logger.error(e);
 		}
 	}
 }
