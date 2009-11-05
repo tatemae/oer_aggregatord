@@ -1,7 +1,5 @@
 package edu.usu.cosl.util;
 
-import java.io.File;
-
 import org.apache.log4j.Appender;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
@@ -11,20 +9,11 @@ public class Daemon {
 	
 	static public Logger logger = Logger.getLogger(Daemon.class);
 
-	static private boolean pidFileExists() {
-		String sPidFile = System.getenv("daemon.pidfile");
-		if (sPidFile != null) {
-			new File(sPidFile).deleteOnExit();
-			return true;
-		}
-		return false;
-	}
-
 	static private Thread mainThread;
 	
 	static private void daemonize() {
 		mainThread = Thread.currentThread();
-		if (pidFileExists()) {
+		if ("true".equals(System.getenv("raker.daemon_mode"))) {
 			System.out.close();
 			System.err.close();
 		}
