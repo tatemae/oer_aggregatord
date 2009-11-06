@@ -21,6 +21,7 @@ import org.apache.commons.dbcp.PoolingDriver;
 import org.apache.commons.dbcp.DriverManagerConnectionFactory;
 import org.apache.commons.pool.impl.StackKeyedObjectPoolFactory;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.PropertyConfigurator;
 
 public class DBThread extends Daemon {
@@ -86,18 +87,42 @@ public class DBThread extends Daemon {
 	public static void getLoggerAndDBOptions(Properties properties) throws IOException
 	{
 		if (bAlreadyLoadedOptions) return;
+
+    	// make sure the logger dir exists or it will blow chunks
 		String sValue = properties.getProperty("log4j.appender.R.File");
 		if (sValue != null) {
 			File logDir = new File(sValue).getParentFile();
-			if (!logDir.exists())
+			if (!logDir.exists()) {
 				logDir.mkdirs();
-			PropertyConfigurator.configure(properties);
-		}
+			}
+		}   
+		PropertyConfigurator.configure(properties);
 		
-        sValue = properties.getProperty("db_yml");
+		// if a different log dir was specified in the environment, use it
+		sValue = System.getProperty("raker.log.dir");
+        if (sValue != null) {
+        	org.apache.log4j.RollingFileAppender R = (org.apache.log4j.RollingFileAppender)logger.getAppender("log4j.appender.R");
+        	if (R != null) {
+    			File logDir = new File(sValue).getParentFile();
+    			if (!logDir.exists()) {
+    				logDir.mkdirs();
+    			}
+        		R.setFile(sValue);
+        		logger.info("Logging to: " + sValue);
+        	}
+        }
+        
+        sValue = System.getProperty("raker.log.level");
+        if (sValue != null) {
+        	logger.setLevel(Level.toLevel(sValue));
+    		logger.info("Log level set to: " + sValue);
+        }
+		
+        sValue = properties.getProperty("raker.database.config");
         String sDBConfigFile = (sValue == null) ? "config/database.yml" : sValue.trim();
-        sDBConfigFile = System.getProperty("RAILS_DB_CONFIG", sDBConfigFile).trim();
+        sDBConfigFile = System.getProperty("raker.database.config", sDBConfigFile).trim();
 
+//        logger.info(System.getProperties().toString());
         sValue = properties.getProperty("rails_env");
         if (sValue != null) sRailsEnv = sValue;
         sRailsEnv = System.getProperty("RAILS_ENV", sRailsEnv);

@@ -13,7 +13,7 @@ public class Daemon {
 	
 	static private void daemonize() {
 		mainThread = Thread.currentThread();
-		if ("true".equals(System.getenv("raker.daemon_mode"))) {
+		if ("true".equals(System.getenv("raker.log_to_console"))) {
 			System.out.close();
 			System.err.close();
 		}

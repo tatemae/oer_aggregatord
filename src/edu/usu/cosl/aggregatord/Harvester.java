@@ -1760,7 +1760,7 @@ public class Harvester extends DBThread
 		return htShortNames;
 	}
 	
-	private static void discoverOAISets()
+	private static void discoverOAISets() throws IOException
 	{
 		try
 		{
@@ -1833,7 +1833,10 @@ public class Harvester extends DBThread
 		}
 		catch (Exception e)
 		{
-			logger.error("discoverOAISets error: ", e);
+			logger.fatal("Error discovering OAI collections: ", e);
+			if (e.toString().contains("Unknown database")) {
+				throw new IOException(e.toString());
+			}
 		}
 	}
 	
@@ -2065,7 +2068,7 @@ public class Harvester extends DBThread
 		}
 	}
 
-	private static boolean harvestStaleFeeds() 
+	private static boolean harvestStaleFeeds() throws IOException 
 	{
 		logger.debug("==========================================================Harvest");
 		boolean bChanges = false;
@@ -2084,7 +2087,7 @@ public class Harvester extends DBThread
 		{
 			logger.info("Harvesting stale feeds: " + vFeeds.size());
 
-			for (Enumeration<FeedInfo> eFeeds = vFeeds.elements(); eFeeds.hasMoreElements();) 
+			for (Enumeration<FeedInfo> eFeeds = vFeeds.elements(); eFeeds.hasMoreElements() && nTotalNewEntries < nMaxEntries;) 
 			{
 				if (isShutdownRequested()) return bChanges;
 
@@ -2102,11 +2105,15 @@ public class Harvester extends DBThread
 		return bChanges;
 	}
 	
-	public static boolean harvest(String sPropertiesFile) throws IOException
+	public static boolean harvest(String sPropertiesFile) throws IOException {
+		return harvest(sPropertiesFile,1000000);
+	}
+	public static boolean harvest(String sPropertiesFile, int nMaxNewEntries) throws IOException
 	{
 		try
 		{
 			getConfigOptions(sPropertiesFile);
+			nMaxEntries = nMaxNewEntries;
 			return harvestStaleFeeds();
 		}
 		catch (IOException e)
