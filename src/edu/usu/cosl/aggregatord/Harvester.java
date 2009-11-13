@@ -70,7 +70,7 @@ import be.cenorm.www.MerlotHarvester;
 
 public class Harvester extends DBThread 
 {
-	public final static String HARVESTER_USER_AGENT = "Folksemantic Harvester v0.2";
+	public final static String HARVESTER_USER_AGENT = "Folksemantic Harvester v0.3";
 	
 	// connection and statement for querying for stale feeds
 	private static Connection cnFeeds;
@@ -1955,18 +1955,17 @@ public class Harvester extends DBThread
 	    	Properties properties = loadPropertyFile(sPropertiesFile);
 	        getLoggerAndDBOptions(properties);
 	        
-	        String sValue = properties.getProperty("discover_oai_sets");
+	        String sValue = properties.getProperty("aggregator.discover_oai_sets");
 	        if (sValue != null) bDiscoverOAISets = "true".equals(sValue);
-	        sValue = properties.getProperty("request_timeout");
+	        sValue = properties.getProperty("aggregator.request_timeout");
 	        try {if (sValue != null) nConnectionTimeout = Integer.parseInt(sValue);}catch(Exception nfe){logger.error("Bad request_timeout value",nfe);}
 	        if ("development".equals(sRailsEnv)) bImportArchivedFeeds = true;
-	        sValue = properties.getProperty("import_archived_feed_data");
+	        sValue = properties.getProperty("aggregator.import_archived_feed_data");
 	        if (sValue != null) bImportArchivedFeeds = "true".equals(sValue);
-	        sValue = properties.getProperty("harvest_from_wire");
+	        sValue = properties.getProperty("aggregator.harvest_from_wire");
 	        if (sValue != null) bHarvestFromWire = "true".equals(sValue);
-	        sValue = properties.getProperty("feed_archive_path");
-	        if (sValue != null) sArchivePath = sValue;
-	        sArchivePath = System.getProperty("FEED_ARCHIVE_PATH", sArchivePath);
+	        sArchivePath = System.getProperty("aggregator.feed_archive_path");
+	        if (sArchivePath == null) sArchivePath = properties.getProperty("aggregator.feed_archive_path");
 	        logger.debug("Using feed archive path: " + sArchivePath);
 	    }
 	    catch (IOException e) 

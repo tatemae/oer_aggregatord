@@ -5,7 +5,6 @@ import java.sql.SQLException;
 import java.sql.Connection;
 import java.sql.Timestamp;
 
-import java.util.Enumeration;
 import java.util.Properties;
 import java.util.Date;
 
@@ -89,7 +88,7 @@ public class DBThread extends Daemon {
 	{
 		if (bAlreadyLoadedOptions) return;
 
-		String sValue = System.getProperty("raker.log.file");
+		String sValue = System.getProperty("recommender.log_file");
         if (sValue != null) properties.setProperty("log4j.appender.R.File",sValue);
 
         // make sure the logger dir exists or it will blow chunks
@@ -104,20 +103,18 @@ public class DBThread extends Daemon {
 		}
 		PropertyConfigurator.configure(properties);
 		
-        sValue = System.getProperty("raker.log.level");
+        sValue = System.getProperty("recommender.log_level");
         if (sValue != null) {
         	logger.setLevel(Level.toLevel(sValue));
     		logger.info("Log level set to: " + sValue);
         }
 		
-        sValue = properties.getProperty("raker.database.config");
-        String sDBConfigFile = (sValue == null) ? "config/database.yml" : sValue.trim();
-        sDBConfigFile = System.getProperty("raker.database.config", sDBConfigFile).trim();
+        String sDBConfigFile = System.getProperty("recommender.database.config_file");
+        if (sDBConfigFile == null) sDBConfigFile = properties.getProperty("recommender.database.config_file");
+        if (sDBConfigFile == null || sDBConfigFile.length() == 0) throw new IOException("No database config file was specified");
 
-//        logger.info(System.getProperties().toString());
-        sValue = properties.getProperty("rails_env");
-        if (sValue != null) sRailsEnv = sValue;
-        sRailsEnv = System.getProperty("RAILS_ENV", sRailsEnv);
+        sRailsEnv = System.getProperty("RAILS_ENV");
+        if (sRailsEnv == null) sRailsEnv = properties.getProperty("rails_env");
         
 		try
 		{
