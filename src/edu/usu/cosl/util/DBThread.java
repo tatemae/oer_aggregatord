@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.sql.Connection;
 import java.sql.Timestamp;
 
+import java.util.Enumeration;
 import java.util.Properties;
 import java.util.Date;
 
@@ -88,30 +89,21 @@ public class DBThread extends Daemon {
 	{
 		if (bAlreadyLoadedOptions) return;
 
-    	// make sure the logger dir exists or it will blow chunks
-		String sValue = properties.getProperty("log4j.appender.R.File");
+		String sValue = System.getProperty("raker.log.file");
+        if (sValue != null) properties.setProperty("log4j.appender.R.File",sValue);
+
+        // make sure the logger dir exists or it will blow chunks
+		sValue = properties.getProperty("log4j.appender.R.File");
 		if (sValue != null) {
-			File logDir = new File(sValue).getParentFile();
+			File logFile = new File(sValue);
+			System.out.println("Logging to " + logFile.getAbsolutePath());
+			File logDir = logFile.getParentFile();
 			if (!logDir.exists()) {
 				logDir.mkdirs();
 			}
-		}   
+		}
 		PropertyConfigurator.configure(properties);
 		
-		// if a different log dir was specified in the environment, use it
-		sValue = System.getProperty("raker.log.dir");
-        if (sValue != null) {
-        	org.apache.log4j.RollingFileAppender R = (org.apache.log4j.RollingFileAppender)logger.getAppender("log4j.appender.R");
-        	if (R != null) {
-    			File logDir = new File(sValue).getParentFile();
-    			if (!logDir.exists()) {
-    				logDir.mkdirs();
-    			}
-        		R.setFile(sValue);
-        		logger.info("Logging to: " + sValue);
-        	}
-        }
-        
         sValue = System.getProperty("raker.log.level");
         if (sValue != null) {
         	logger.setLevel(Level.toLevel(sValue));
