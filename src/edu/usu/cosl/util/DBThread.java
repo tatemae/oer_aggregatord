@@ -1,8 +1,10 @@
 package edu.usu.cosl.util;
 
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Connection;
+import java.sql.Statement;
 import java.sql.Timestamp;
 
 import java.util.Properties;
@@ -66,6 +68,41 @@ public class DBThread extends Daemon {
 	{
 		return new Timestamp(new Date().getTime());
 	}
+	protected static int getLastID(Statement st) throws SQLException
+	{
+		ResultSet rsLastID = st.executeQuery("SELECT LAST_INSERT_ID()");
+		try
+		{
+			if (!rsLastID.next())
+			{
+				rsLastID.close();
+				throw new SQLException("Unable to retrieve the id for a newly added entry.");
+			}
+			int nLastID = rsLastID.getInt(1);
+			if (nLastID == 0)
+			{
+				rsLastID.close();
+				throw new SQLException("Unable to retrieve the id for a newly added entry.");
+			}
+			return nLastID;
+		}
+		catch (SQLException e)
+		{
+			if (rsLastID != null) rsLastID.close();
+			throw e;
+		}
+	}
+
+	protected static int getGlobalAggregationID(Connection cn) throws SQLException{
+		Statement st = cn.createStatement();
+		ResultSet rs = st.executeQuery("SELECT id FROM aggregations WHERE title = 'global_feeds'");
+		int nAggregationID = 0;
+		if (rs.next()) nAggregationID = rs.getInt(1);
+		rs.close();
+		st.close();
+		return nAggregationID;
+	}
+	
 	public static Properties loadPropertyFile(String sFile) throws IOException
 	{
 	    try 

@@ -14,6 +14,12 @@ public class FeedInfo
 	public final static int PRIORITY_NOW = 1;
 	public final static int PRIORITY_DEFAULT = 10;
 	
+    public final static int STATUS_NOT_USED = -3;
+    public final static int STATUS_PENDING = -2;
+    public final static int STATUS_BANNED = -1;
+    public final static int STATUS_OK = 0;
+    public final static int STATUS_APPROVED = 1;
+	
 	public int nFeedID;
 	public String sURI;
 	public String sDescription;

@@ -2,9 +2,9 @@ package edu.usu.cosl.aggregatord;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileInputStream;
+//import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.FileNotFoundException;
+//import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -72,19 +72,6 @@ public class Harvester extends DBThread
 {
 	public final static String HARVESTER_USER_AGENT = "Folksemantic Harvester v0.3";
 	
-	// connection and statement for querying for stale feeds
-	private static Connection cnFeeds;
-	private static Statement stGetStaleFeeds;
-	private static final String QUERY_FEEDS =
-		"SELECT feeds.id, feeds.service_id, feeds.title, feeds.uri, feeds.priority, feeds.login, feeds.password, " +
-		"services.api_uri, feeds.last_harvested_at, feeds.failed_requests, feeds.harvest_interval, feeds.display_uri, feeds.short_title, tag_filter, default_language_id, default_grain_size " +
-		"FROM feeds LEFT OUTER JOIN services ON (feeds.service_id = services.id) ";
-	private static final String STALE_FEEDS_CONDITION =
-		"WHERE failed_requests < 10 AND feeds.id != 0 AND feeds.status >= 0 AND DATE_ADD(last_harvested_at, INTERVAL harvest_interval SECOND) < NOW() ";
-//		"WHERE feeds.id = 1047364725";
-	private static final String QUERY_STALE_FEEDS = 
-		QUERY_FEEDS + STALE_FEEDS_CONDITION + " ORDER BY feeds.priority";
-
 	// query for nuking broken feeds
 	// DELETE FROM feeds WHERE feeds.failed_requests = 10 AND feeds.id IN (SELECT f.id FROM (SELECT feeds.id, COUNT(entries.id) FROM feeds LEFT JOIN entries ON entries.feed_id = feeds.id GROUP BY feeds.id, feeds.title, feeds.uri ORDER BY count) AS f WHERE f.count = 0)
 	
@@ -1585,31 +1572,6 @@ public class Harvester extends DBThread
 //		}
 //	}
 	
-	private int getLastID(Statement st) throws SQLException
-	{
-		ResultSet rsLastID = st.executeQuery("SELECT LAST_INSERT_ID()");
-		try
-		{
-			if (!rsLastID.next())
-			{
-				rsLastID.close();
-				throw new SQLException("Unable to retrieve the id for a newly added entry.");
-			}
-			int nLastID = rsLastID.getInt(1);
-			if (nLastID == 0)
-			{
-				rsLastID.close();
-				throw new SQLException("Unable to retrieve the id for a newly added entry.");
-			}
-			return nLastID;
-		}
-		catch (SQLException e)
-		{
-			if (rsLastID != null) rsLastID.close();
-			throw e;
-		}
-	}
-	
 	private void updateFeedInfo(FeedInfo feedInfo)
 	{
 		try
@@ -1760,6 +1722,15 @@ public class Harvester extends DBThread
 		return htShortNames;
 	}
 	
+	private static boolean isOAIEndpointInGlobalAggregation(Connection cn, int nGlobalAggregationID, int nOAIEndpointID) throws SQLException {
+		Statement st = cn.createStatement();
+		ResultSet rs = st.executeQuery("SELECT id FROM aggregation_feeds WHERE feed_type = 'OaiEndpoint' AND feed_id = " + nOAIEndpointID);
+		boolean bInAggregation = rs.next();
+		rs.close();
+		st.close();
+		return bInAggregation;
+	}
+	
 	private static void discoverOAISets() throws IOException
 	{
 		try
@@ -1772,8 +1743,13 @@ public class Harvester extends DBThread
 			Connection cn = getConnection();
 			Statement stEndpoints = cn.createStatement();
 			PreparedStatement pstFeeds = cn.prepareStatement("SELECT title FROM feeds WHERE uri = ?");
+
 			PreparedStatement pstAddFeed = cn.prepareStatement("INSERT INTO feeds (uri, title, short_title, harvested_from_display_uri, harvested_from_title, harvested_from_short_title, harvest_interval, priority, service_id) VALUES (?,?,?,?,?,?,?,1,?)");
 			pstAddFeed.setInt(8, FeedInfo.SERVICE_OAI);
+
+			PreparedStatement pstAddAggregationFeed = cn.prepareStatement("INSERT INTO aggregation_feeds (aggregation_id, feed_id, feed_type) VALUES (?,?,'Feed')");
+			int nGlobalAggregationID = getGlobalAggregationID(cn);
+			pstAddAggregationFeed.setInt(1, nGlobalAggregationID);
 			ResultSet rsEndpoints = stEndpoints.executeQuery("SELECT * FROM oai_endpoints");
 			while (rsEndpoints.next())
 			{
@@ -1784,6 +1760,7 @@ public class Harvester extends DBThread
 				String sHarvestedFromDisplayURI = rsEndpoints.getString("display_uri");
 				String sHarvestedFromTitle = rsEndpoints.getString("title");
 				String sHarvestedFromShortTitle = rsEndpoints.getString("short_title");
+            	boolean bOAIEndpointInGlobalAggregation = isOAIEndpointInGlobalAggregation(cn, nGlobalAggregationID, rsEndpoints.getInt("id"));            	
 				
 				// request the sets
 				String sListSetsURI = sURI + "?verb=ListSets";
@@ -1804,7 +1781,7 @@ public class Harvester extends DBThread
 	            	String sSetTitle = entry.getTitle();
 
 	            	// build the feed uri for the set
-	            	String sFeedURI = sURI + "?verb=ListRecords&metadataPrefix=" + sMetadataFormat + "&set=" + sSetID; 
+	            	String sFeedURI = sURI + "?verb=ListRecords&metadataPrefix=" + sMetadataFormat + "&set=" + sSetID;
 	            	
 	            	// query to see if a feed for the set already exists in the database
 	            	pstFeeds.setString(1, sFeedURI);
@@ -1821,12 +1798,20 @@ public class Harvester extends DBThread
 	            		pstAddFeed.setString(5, sHarvestedFromTitle);
 	            		pstAddFeed.setString(6, sHarvestedFromShortTitle);
 	            		pstAddFeed.setInt(7, nFeedHarvestInterval);
-	            		pstAddFeed.addBatch();
-	            	}
+	            		pstAddFeed.executeUpdate();
+	            		
+	            		int nFeedID = Harvester.getLastID(pstAddFeed);
+	            		
+	            		if (bOAIEndpointInGlobalAggregation) {
+		            		pstAddAggregationFeed.setInt(2, nFeedID);
+		               		pstAddAggregationFeed.executeUpdate();
+	            		}
+	           	    }
 	            }
 			}
-			if (!isShutdownRequested()) pstAddFeed.executeBatch();
 			pstFeeds.close();
+			pstAddFeed.close();
+			pstAddAggregationFeed.close();
 			stEndpoints.close();
 			rsEndpoints.close();
 			cn.close();
@@ -1840,6 +1825,19 @@ public class Harvester extends DBThread
 		}
 	}
 	
+	// connection and statement for querying for stale feeds
+	private static Connection cnFeeds;
+	private static Statement stGetStaleFeeds;
+	private static final String QUERY_FEEDS =
+		"SELECT feeds.id, feeds.service_id, feeds.title, feeds.uri, feeds.priority, feeds.login, feeds.password, " +
+		"services.api_uri, feeds.last_harvested_at, feeds.failed_requests, feeds.harvest_interval, feeds.display_uri, feeds.short_title, tag_filter, default_language_id, default_grain_size " +
+		"FROM feeds LEFT OUTER JOIN services ON (feeds.service_id = services.id) ";
+	private static final String STALE_FEEDS_CONDITION =
+//		"WHERE failed_requests < 10 AND feeds.id != 0 AND feeds.status >= " + FeedInfo.STATUS_OK + " AND DATE_ADD(last_harvested_at, INTERVAL harvest_interval SECOND) < NOW() ";
+		"WHERE feeds.id = 1047364831";
+	private static final String QUERY_STALE_FEEDS = 
+		QUERY_FEEDS + STALE_FEEDS_CONDITION + " ORDER BY feeds.priority";
+
 	public static Vector<FeedInfo> getStaleFeeds()
 	{
 		ResultSet rsStaleFeeds = null;
@@ -2069,7 +2067,7 @@ public class Harvester extends DBThread
 
 	private static boolean harvestStaleFeeds() throws IOException 
 	{
-		logger.debug("==========================================================Harvest");
+		logger.debug("==========================================================Harvest - begin");
 		boolean bChanges = false;
 		System.setProperty("sun.net.client.defaultReadTimeout","" + nConnectionTimeout*1000);
 		
@@ -2101,6 +2099,7 @@ public class Harvester extends DBThread
 		} else {
 			logger.info("Harvester found no stale feeds to harvest");
 		}
+		logger.debug("==========================================================Harvest - end");
 		return bChanges;
 	}
 	
