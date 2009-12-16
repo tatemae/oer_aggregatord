@@ -42,6 +42,7 @@ public class DBThread extends Daemon {
 	
 	private static boolean bDriverLoaded = false;
 	protected static String sRailsEnv = "development";
+	private static GenericObjectPool connectionPool;
 	
 	public static void loadDBDriver() throws ClassNotFoundException
 	{
@@ -50,7 +51,7 @@ public class DBThread extends Daemon {
 		Class.forName("com.mysql.jdbc.Driver");
 		Class.forName("org.apache.commons.dbcp.PoolingDriver");
 		
-		GenericObjectPool connectionPool = new GenericObjectPool(null);
+		connectionPool = new GenericObjectPool(null);
 		ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(sDBConnection, sUser, sPassword);
 		StackKeyedObjectPoolFactory pstPoolFactory = new StackKeyedObjectPoolFactory(20);
 		final String sValidationQuery = null;
@@ -58,6 +59,12 @@ public class DBThread extends Daemon {
 		PoolingDriver driver = new PoolingDriver();
 		driver.registerPool(sPool,connectionPool);
 		bDriverLoaded = true;
+	}
+	public static void reloadDBDriver() {
+		try {
+			connectionPool.close();
+			loadDBDriver();
+		} catch (Exception e) {}
 	}
 	public static Connection getConnection() throws ClassNotFoundException, SQLException
 	{
