@@ -1833,8 +1833,8 @@ public class Harvester extends DBThread
 		"services.api_uri, feeds.last_harvested_at, feeds.failed_requests, feeds.harvest_interval, feeds.display_uri, feeds.short_title, tag_filter, default_language_id, default_grain_size " +
 		"FROM feeds LEFT OUTER JOIN services ON (feeds.service_id = services.id) ";
 	private static final String STALE_FEEDS_CONDITION =
-//		"WHERE failed_requests < 10 AND feeds.id != 0 AND feeds.status >= " + FeedInfo.STATUS_OK + " AND DATE_ADD(last_harvested_at, INTERVAL harvest_interval SECOND) < NOW() ";
-		"WHERE feeds.id = 1047364831";
+		"WHERE failed_requests < 10 AND feeds.id != 0 AND feeds.status >= " + FeedInfo.STATUS_OK + " AND DATE_ADD(last_harvested_at, INTERVAL harvest_interval SECOND) < NOW() ";
+//		"WHERE feeds.id = 1047364831";
 	private static final String QUERY_STALE_FEEDS = 
 		QUERY_FEEDS + STALE_FEEDS_CONDITION + " ORDER BY feeds.priority";
 
