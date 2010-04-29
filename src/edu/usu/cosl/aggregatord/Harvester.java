@@ -782,6 +782,9 @@ public class Harvester extends DBThread
         }
 		if (feedInfo.nServiceID == FeedInfo.SERVICE_OAI)
 		{
+			// clear previous resumption token
+			feedInfo.sResumptionToken = null;
+			
             // when requesting an OAI feed, the parser stores the resumption token in foreign markup 
 			Object lMarkup = feed.getForeignMarkup();
 			if (lMarkup != null)
@@ -789,15 +792,10 @@ public class Harvester extends DBThread
 				if (lMarkup instanceof List  && ((List)lMarkup).size() > 0)
 				{
 					Object item = ((List)lMarkup).get(0);
-					if (item instanceof String)
-					{
+					if (item instanceof String && ((String)item).length() > 0)
 						feedInfo.sResumptionToken = (String)item;
-						if (feedInfo.sResumptionToken.length() == 0) 
-							feedInfo.sResumptionToken = null;
-					}
 				}
-			}
-			else feedInfo.sResumptionToken = null;
+			};
 		}
 		return feed;
 	}
@@ -824,7 +822,7 @@ public class Harvester extends DBThread
 				if (lDate > feedInfo.lLastHarvested)
 				{
 					try{
-						feedInfo.lLastHarvested = lDate;
+						feedInfo.lLastHarvested = feedInfo.lLastRequested = lDate;
 						if (harvestRomeFeed(feedInfo, new SyndFeedInput().build(new XmlReader(fArchive))))
 							logger.debug("Imported: ..." + (sFeedArchiveDir.length() > 20 ? sFeedArchiveDir.substring(sFeedArchiveDir.length() - 20) : sFeedArchiveDir) + "/" + fArchive.getName());
 					} catch (Exception e) {
@@ -1744,7 +1742,7 @@ public class Harvester extends DBThread
 			Statement stEndpoints = cn.createStatement();
 			PreparedStatement pstFeeds = cn.prepareStatement("SELECT title FROM feeds WHERE uri = ?");
 
-			PreparedStatement pstAddFeed = cn.prepareStatement("INSERT INTO feeds (uri, title, short_title, harvested_from_display_uri, harvested_from_title, harvested_from_short_title, harvest_interval, priority, service_id) VALUES (?,?,?,?,?,?,?,1,?)");
+			PreparedStatement pstAddFeed = cn.prepareStatement("INSERT INTO feeds (uri, title, short_title, harvested_from_display_uri, harvested_from_title, harvested_from_short_title, harvest_interval, priority, service_id, last_harvested_at, last_requested_at, created_at, updated_at) VALUES (?,?,?,?,?,?,?,1,?,'1969-01-01','1969-01-01',now(),now())");
 			pstAddFeed.setInt(8, FeedInfo.SERVICE_OAI);
 
 			PreparedStatement pstAddAggregationFeed = cn.prepareStatement("INSERT INTO aggregation_feeds (aggregation_id, feed_id, feed_type) VALUES (?,?,'Feed')");
@@ -1762,8 +1760,10 @@ public class Harvester extends DBThread
 				String sHarvestedFromShortTitle = rsEndpoints.getString("short_title");
             	boolean bOAIEndpointInGlobalAggregation = isOAIEndpointInGlobalAggregation(cn, nGlobalAggregationID, rsEndpoints.getInt("id"));            	
 				
-				// request the sets
-				String sListSetsURI = sURI + "?verb=ListSets";
+    			// request the sets
+            	String sSeparator = sURI.contains("?") ? "&" : "?";
+				String sListSetsURI = sURI + sSeparator + "verb=ListSets";
+    			logger.debug("Checking: " + sHarvestedFromTitle + " (" + sListSetsURI + ")");
 				HttpURLConnection uriConn = (HttpURLConnection)new URL(sListSetsURI).openConnection();
             	uriConn.setConnectTimeout(nConnectionTimeout*1000);
     			uriConn.setRequestProperty("User-agent", HARVESTER_USER_AGENT);
@@ -1781,7 +1781,7 @@ public class Harvester extends DBThread
 	            	String sSetTitle = entry.getTitle();
 
 	            	// build the feed uri for the set
-	            	String sFeedURI = sURI + "?verb=ListRecords&metadataPrefix=" + sMetadataFormat + "&set=" + sSetID;
+	            	String sFeedURI = sURI + sSeparator + "verb=ListRecords&metadataPrefix=" + sMetadataFormat + "&set=" + sSetID;
 	            	
 	            	// query to see if a feed for the set already exists in the database
 	            	pstFeeds.setString(1, sFeedURI);
@@ -1833,8 +1833,8 @@ public class Harvester extends DBThread
 		"services.api_uri, feeds.last_harvested_at, feeds.failed_requests, feeds.harvest_interval, feeds.display_uri, feeds.short_title, tag_filter, default_language_id, default_grain_size " +
 		"FROM feeds LEFT OUTER JOIN services ON (feeds.service_id = services.id) ";
 	private static final String STALE_FEEDS_CONDITION =
-		"WHERE failed_requests < 10 AND feeds.id != 0 AND feeds.status >= " + FeedInfo.STATUS_OK + " AND DATE_ADD(last_harvested_at, INTERVAL harvest_interval SECOND) < NOW() ";
-//		"WHERE feeds.id = 1047364831";
+//		"WHERE failed_requests < 10 AND feeds.id != 0 AND feeds.status >= " + FeedInfo.STATUS_OK + " AND DATE_ADD(last_harvested_at, INTERVAL harvest_interval SECOND) < NOW() ";
+		"WHERE feeds.id = 1047364907";
 	private static final String QUERY_STALE_FEEDS = 
 		QUERY_FEEDS + STALE_FEEDS_CONDITION + " ORDER BY feeds.priority";
 
