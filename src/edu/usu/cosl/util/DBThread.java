@@ -159,10 +159,12 @@ public class DBThread extends Daemon {
 
         sRailsEnv = System.getProperty("RAILS_ENV");
         if (sRailsEnv == null) sRailsEnv = properties.getProperty("rails_env");
+        if (sRailsEnv == null) sRailsEnv = "development";
         
 		try
 		{
-			logger.debug("Looking in " + sDBConfigFile + " for " + sRailsEnv + " database settings");
+			sDBConfigFile = sDBConfigFile.trim(); 
+			logger.debug("Looking in " + sDBConfigFile+ " for " + sRailsEnv + " database settings");
 			BufferedReader reader = new BufferedReader(new FileReader(sDBConfigFile));
 			String sLine = reader.readLine();
 			while(sLine != null)
