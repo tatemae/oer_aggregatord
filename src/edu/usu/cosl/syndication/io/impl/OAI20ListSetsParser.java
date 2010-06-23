@@ -177,8 +177,12 @@ public class OAI20ListSetsParser extends BaseWireFeedParser {
     	if (eSetSpec == null || eSetName == null) return null;
     	
     	String sID = eSetSpec.getText();
-    	if (!sID.startsWith("collection:")) return null;
     	String sTitle = eSetName.getText();
+
+    	// HACK: OER Collections provides a single set with all collections titled 'All collections'
+    	// We want individual collections, not one with all of them
+    	// the correct fix is to implement an approval mechanism for auto discovered feeds
+    	if (sTitle.startsWith("All collections")) return null;
     	
     	// store the set information
     	Item item = new Item();
