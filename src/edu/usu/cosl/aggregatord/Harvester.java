@@ -116,8 +116,6 @@ public class Harvester extends DBThread
 	BlockingQueue<FeedInfo> toDoQueue;
 	BlockingQueue<String> activeJobsQueue;
 	
-	private HashSet<String> hsStopWords = new HashSet<String>();
-	
     static private Hashtable<String, Integer> htLanguages = new Hashtable<String, Integer>();
     static private int nDefaultLanguageID;
 	
@@ -138,11 +136,6 @@ public class Harvester extends DBThread
 	{
 		this.toDoQueue = toDoQueue;
 		this.activeJobsQueue = activeJobsQueue;
-		final String[] asStopWords = {"and","is","a","the","in","--","for","on","to","of","are","with","other"};
-		for (int nWord = 0; nWord < asStopWords.length; nWord++)
-		{
-			hsStopWords.add(asStopWords[nWord]);
-		}
 		sdf = new SimpleDateFormat();
 //		sdf.applyPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
 		sdf.applyPattern("yyyy-MM-dd");
@@ -1834,7 +1827,7 @@ public class Harvester extends DBThread
 		"FROM feeds LEFT OUTER JOIN services ON (feeds.service_id = services.id) ";
 	private static final String STALE_FEEDS_CONDITION =
 //		"WHERE failed_requests < 10 AND feeds.id != 0 AND feeds.status >= " + FeedInfo.STATUS_OK + " AND DATE_ADD(last_harvested_at, INTERVAL harvest_interval SECOND) < NOW() ";
-		"WHERE feeds.id = 1047364907";
+		"WHERE feeds.id = 1047364926";
 	private static final String QUERY_STALE_FEEDS = 
 		QUERY_FEEDS + STALE_FEEDS_CONDITION + " ORDER BY feeds.priority";
 
